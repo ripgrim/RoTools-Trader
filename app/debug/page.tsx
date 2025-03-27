@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRobloxAuthContext } from '@/app/providers/roblox-auth-provider'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +16,8 @@ export default function DebugPage() {
 
   // Parse cookie info when auth state changes
   useEffect(() => {
+    console.log("Auth state in debug page changed:", { isAuthenticated, isLoading, cookiePresent: !!cookie });
+    
     if (cookie) {
       try {
         // Extract user ID and expiration from cookie if possible
@@ -25,26 +27,48 @@ export default function DebugPage() {
           truncated: `${cookie.substring(0, 20)}...${cookie.substring(cookie.length - 20)}`,
         })
       } catch (error) {
+        console.error("Failed to parse cookie info", error);
         setCookieInfo({ error: 'Failed to parse cookie info' })
       }
     } else {
       setCookieInfo({})
     }
-  }, [cookie])
+  }, [cookie, isAuthenticated, isLoading])
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     if (!cookie) return
     
+    console.log("Refreshing cookie...");
     setIsRefreshing(true)
+    
     try {
       const refreshed = await refreshCookie(cookie)
+      console.log("Refresh result:", !!refreshed);
+      
       if (refreshed) {
         await login(refreshed)
       }
+    } catch (error) {
+      console.error("Refresh error:", error);
     } finally {
       setIsRefreshing(false)
     }
-  }
+  }, [cookie, login, refreshCookie])
+
+  const handleOpenDialog = useCallback(() => {
+    console.log("Opening auth dialog");
+    setIsDialogOpen(true)
+  }, [])
+
+  const handleDialogOpenChange = useCallback((open: boolean) => {
+    console.log("Dialog open state changed:", open);
+    setIsDialogOpen(open)
+  }, [])
+
+  const handleLogout = useCallback(async () => {
+    console.log("Initiating logout from debug page");
+    await logout()
+  }, [logout])
 
   return (
     <div className="container mx-auto py-10 space-y-6">
@@ -96,7 +120,7 @@ export default function DebugPage() {
                       variant="outline" 
                       size="sm" 
                       className="w-full border-zinc-800 hover:bg-red-950/30 hover:text-red-400"
-                      onClick={logout}
+                      onClick={handleLogout}
                     >
                       <LogOut className="h-4 w-4 mr-2" /> Logout
                     </Button>
@@ -106,7 +130,7 @@ export default function DebugPage() {
                     variant="outline" 
                     size="sm" 
                     className="w-full border-zinc-800"
-                    onClick={() => setIsDialogOpen(true)}
+                    onClick={handleOpenDialog}
                   >
                     <Shield className="h-4 w-4 mr-2" /> Authenticate
                   </Button>
@@ -147,7 +171,10 @@ export default function DebugPage() {
         </CardFooter>
       </Card>
       
-      <RobloxAuthDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <RobloxAuthDialog 
+        open={isDialogOpen} 
+        onOpenChange={handleDialogOpenChange} 
+      />
     </div>
   )
 } 

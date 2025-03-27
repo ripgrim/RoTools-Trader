@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -19,16 +19,23 @@ interface RobloxAuthDialogProps {
 }
 
 export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) {
-  const { login } = useRobloxAuth();
+  const { login, isAuthenticated } = useRobloxAuth();
   const [cookie, setCookie] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Close dialog if user becomes authenticated
+  useEffect(() => {
+    if (isAuthenticated && open) {
+      onOpenChange(false);
+    }
+  }, [isAuthenticated, open, onOpenChange]);
 
   const handleCookieChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCookie(e.target.value);
   }, []);
 
   const handleSubmit = useCallback(async () => {
-    if (!cookie.trim()) {
+    if (!cookie.trim() || isSubmitting) {
       return;
     }
 
@@ -40,18 +47,26 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
       console.log("Login result:", success);
       
       if (success) {
-        onOpenChange(false);
+        // Close the dialog after a brief delay
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 500);
       }
     } catch (error) {
       console.error("Login error:", error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [cookie, login, onOpenChange]);
+  }, [cookie, login, onOpenChange, isSubmitting]);
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (!isSubmitting) {
       onOpenChange(open);
+      
+      // Reset state when dialog closes
+      if (!open) {
+        setCookie("");
+      }
     }
   }, [isSubmitting, onOpenChange]);
 
@@ -113,6 +128,7 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
               className="w-full min-h-[80px] bg-zinc-900/50 border-zinc-800 focus:ring-offset-zinc-950"
               value={cookie}
               onChange={handleCookieChange}
+              disabled={isSubmitting}
             />
             <Button
               variant="default"

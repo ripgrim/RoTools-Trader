@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useRef } from 'react';
 import { useRobloxAuth } from '@/app/hooks/use-roblox-auth';
 
 // Define the shape of the auth context
@@ -19,9 +19,24 @@ const RobloxAuthContext = createContext<RobloxAuthContextType | undefined>(undef
 // Provider component that wraps parts of the app that need auth
 export function RobloxAuthProvider({ children }: { children: ReactNode }) {
   const auth = useRobloxAuth();
+  const authRef = useRef(auth);
+  
+  // Prevent unnecessary re-renders by only updating the ref when important values change
+  if (auth.isAuthenticated !== authRef.current.isAuthenticated || 
+      auth.isLoading !== authRef.current.isLoading || 
+      auth.cookie !== authRef.current.cookie) {
+    authRef.current = auth;
+  }
+  
+  // Memoize the context value to prevent unnecessary re-renders
+  const value = useMemo(() => authRef.current, [
+    authRef.current.isAuthenticated,
+    authRef.current.isLoading,
+    authRef.current.cookie,
+  ]);
   
   return (
-    <RobloxAuthContext.Provider value={auth}>
+    <RobloxAuthContext.Provider value={value}>
       {children}
     </RobloxAuthContext.Provider>
   );

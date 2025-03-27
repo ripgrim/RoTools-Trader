@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSecureStorage } from './use-secure-storage';
 import { useToast } from '@/hooks/use-toast';
 import Cookies from 'js-cookie';
@@ -22,6 +22,9 @@ export function useRobloxAuth() {
   });
   const { getSecureValue, setSecureValue } = useSecureStorage();
   const { toast } = useToast();
+  
+  // Add a ref to track initialization status
+  const hasInitialized = useRef(false);
 
   // Set or remove the session cookie
   const updateSessionCookie = useCallback((isAuthenticated: boolean) => {
@@ -47,7 +50,13 @@ export function useRobloxAuth() {
 
   // Initialize auth state on mount
   useEffect(() => {
+    // Use our ref to ensure we only initialize once
+    if (hasInitialized.current) {
+      return;
+    }
+    
     let isMounted = true;
+    hasInitialized.current = true;
     
     const initAuth = async () => {
       try {
