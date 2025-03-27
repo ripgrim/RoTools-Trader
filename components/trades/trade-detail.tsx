@@ -12,7 +12,6 @@ import { Drawer } from 'vaul';
 import { useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { ScreenshotDialog } from './screenshot-dialog';
-import { useScreenshot } from "@/hooks/use-screenshot";
 import { transformTradeForScreenshot } from "@/lib/utils";
 
 interface TradeDetailProps {
@@ -24,10 +23,7 @@ interface TradeDetailProps {
 export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps) {
   const tradeContentRef = useRef<HTMLDivElement>(null);
   const [isScreenshotOpen, setIsScreenshotOpen] = useState(false);
-  const { isGenerating } = useScreenshot({
-    onComplete: () => {},
-    onError: (error: string) => console.error('Screenshot error:', error),
-  });
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const generateImage = async () => {
     if (!tradeContentRef.current) return;
@@ -56,6 +52,13 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
       console.error('Failed to generate image:', error);
     }
   };
+
+  // Update the effect to reset isGenerating when dialog closes
+  useEffect(() => {
+    if (!isScreenshotOpen) {
+      setIsGenerating(false);
+    }
+  }, [isScreenshotOpen]);
 
   // Add logging for rendered content
   useEffect(() => {
@@ -161,7 +164,10 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
               size="sm"
               variant="outline"
               className="gap-2"
-              onClick={() => setIsScreenshotOpen(true)}
+              onClick={() => {
+                setIsGenerating(true);
+                setIsScreenshotOpen(true);
+              }}
             >
               {isGenerating ? (
                 <>

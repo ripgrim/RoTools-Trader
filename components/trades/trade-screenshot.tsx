@@ -60,7 +60,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           </div>
           <div className="space-y-2">
             {trade.sending.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
+              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
                 <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
                   <Image
                     src={item.thumbnail}
@@ -74,7 +74,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-zinc-100 truncate flex-shrink">{item.name}</span>
                     {item.serial && (
-                      <div className="flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                      <div className="serial-container flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
                         <LimitedIcon className="w-3 h-3" />
                         <span className="text-xs">{item.serial}</span>
                       </div>
@@ -120,7 +120,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           </div>
           <div className="space-y-2">
             {trade.receiving.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
+              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
                 <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
                   <Image
                     src={item.thumbnail}
@@ -134,7 +134,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-zinc-100 truncate flex-shrink">{item.name}</span>
                     {item.serial && (
-                      <div className="flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                      <div className="serial-container flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
                         <LimitedIcon className="w-3 h-3" />
                         <span className="text-xs">{item.serial}</span>
                       </div>
@@ -185,7 +185,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           <span className="text-zinc-400">Value Diff:</span>
           <span className={cn(
             trade.valueDiff > 0 ? "text-green-400" : "text-red-400",
-            "shrink-0"
+            "value-diff shrink-0 ml-2"
           )}>
             {trade.valueDiff > 0 ? "+" : ""}{formatNumber(trade.valueDiff)}
             <span className="text-sm ml-1.5">
