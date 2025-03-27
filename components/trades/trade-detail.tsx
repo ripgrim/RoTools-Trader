@@ -3,7 +3,7 @@
 import { Trade, TradeItem } from '@/app/types/trade';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftRight, Camera, CheckCircle, Circle, CircleArrowOutUpLeft, XCircle } from 'lucide-react';
+import { ArrowLeftRight, Camera, CheckCircle, Circle, CircleArrowOutUpLeft, XCircle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LimitedIcon } from '@/components/ui/limited-icon';
 import { RobuxIcon } from '@/components/ui/robux-icon';
@@ -12,6 +12,8 @@ import { Drawer } from 'vaul';
 import { useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { ScreenshotDialog } from './screenshot-dialog';
+import { useScreenshot } from "@/hooks/use-screenshot";
+import { transformTradeForScreenshot } from "@/lib/utils";
 
 interface TradeDetailProps {
   trade: Trade;
@@ -22,6 +24,10 @@ interface TradeDetailProps {
 export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps) {
   const tradeContentRef = useRef<HTMLDivElement>(null);
   const [isScreenshotOpen, setIsScreenshotOpen] = useState(false);
+  const { isGenerating } = useScreenshot({
+    onComplete: () => {},
+    onError: (error: string) => console.error('Screenshot error:', error),
+  });
 
   const generateImage = async () => {
     if (!tradeContentRef.current) return;
@@ -151,14 +157,23 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-zinc-400 hover:text-zinc-100"
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-2"
               onClick={() => setIsScreenshotOpen(true)}
             >
-              <Camera className="w-4 h-4 mr-2" />
-              Generate W/L
+              {isGenerating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Camera className="w-4 h-4" />
+                  Screenshot
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -400,7 +415,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
       </div>
 
       <ScreenshotDialog
-        trade={trade}
+        trade={transformTradeForScreenshot(trade)}
         open={isScreenshotOpen}
         onOpenChange={setIsScreenshotOpen}
       />

@@ -1,124 +1,199 @@
 "use client"
 
-import { Trade, TradeItem } from '@/app/types/trade';
+import { Trade } from '@/app/types/trade';
 import { RobuxIcon } from '@/components/ui/robux-icon';
 import { LimitedIcon } from '@/components/ui/limited-icon';
 import Image from 'next/image';
 import { format } from 'date-fns';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
 
-interface TradeScreenshotProps {
-  trade: Trade;
+const formatNumber = (num: number) => num.toLocaleString();
+
+interface TradeItem {
+  id: string;
+  name: string;
+  thumbnail: string;
+  serial?: string;
+  rap?: number;
+  value?: number;
 }
 
-function ItemList({ items, type }: { items: TradeItem[]; type: 'offering' | 'requesting' }) {
-  return (
-    <div className="space-y-2">
-      {items.map((item) => (
-        <div key={item.id} className="flex items-center gap-2 bg-zinc-900/50 p-2 border border-zinc-800">
-          <img
-            src={item.thumbnail}
-            alt={item.name}
-            className="w-8 h-8 object-cover border border-zinc-800"
-          />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1">
-              <span className="text-sm text-zinc-100 truncate">{item.name}</span>
-              {item.serial && (
-                <div className="flex items-center gap-0.5 px-1 rounded bg-zinc-800 text-zinc-400">
-                  <LimitedIcon className="w-3 h-3" />
-                  <span className="text-xs">{item.serial}</span>
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="flex items-center gap-1">
-                <RobuxIcon className="w-3 h-3" />
-                <span>{item.rap?.toLocaleString()}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Image
-                  src="/icons/rolimons_logo_icon_blue.png"
-                  alt="Value"
-                  width={12}
-                  height={12}
-                  className="object-contain"
-                />
-                <span>{item.value?.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+interface TradeUser {
+  displayName: string;
+  avatar: string;
 }
 
-export function TradeScreenshot({ trade }: TradeScreenshotProps) {
-  const offeringTotal = trade.items.offering.reduce((sum, item) => sum + (typeof item.value === 'number' ? item.value : 0), 0);
-  const requestingTotal = trade.items.requesting.reduce((sum, item) => sum + (typeof item.value === 'number' ? item.value : 0), 0);
-  const difference = offeringTotal - requestingTotal;
-  const percentage = requestingTotal === 0 ? 0 : (difference / requestingTotal) * 100;
+export interface ScreenshotTrade {
+  id: string;
+  created: string;
+  sender: TradeUser;
+  receiver: TradeUser;
+  sending: TradeItem[];
+  receiving: TradeItem[];
+  sendingValue: number;
+  receivingValue: number;
+  valueDiff: number;
+  valueDiffPercentage: number;
+  type: 'Trade' | 'Offer';
+}
 
+export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
   return (
-    <div className="bg-zinc-900 p-4 space-y-4 max-w-md mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+    <div className="bg-zinc-950 text-zinc-100 p-5 space-y-4 w-[600px]">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <img
-            src={trade.user.avatar}
-            alt={trade.user.displayName}
-            className="w-8 h-8 border border-zinc-800"
+          <span className="text-zinc-400 text-sm">Trade #{trade.id}</span>
+          <span className="text-zinc-400 text-sm">•</span>
+          <span className="text-zinc-400 text-sm">{format(new Date(trade.created), 'MMM d, yyyy')}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={trade.sender.avatar} />
+              <AvatarFallback>{trade.sender.displayName[0]}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium truncate">{trade.sender.displayName}</span>
+          </div>
+          <div className="space-y-2">
+            {trade.sending.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
+                <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+                  <Image
+                    src={item.thumbnail}
+                    alt={item.name}
+                    className="object-cover"
+                    fill
+                    sizes="40px"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-zinc-100 truncate flex-shrink">{item.name}</span>
+                    {item.serial && (
+                      <div className="flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                        <LimitedIcon className="w-3 h-3" />
+                        <span className="text-xs">{item.serial}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-zinc-300">
+                    {item.rap && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <RobuxIcon className="w-3 h-3" />
+                        <span>{item.rap.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {item.value && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Image
+                          src="/icons/rolimons_logo_icon_blue.png"
+                          alt="Value"
+                          width={12}
+                          height={12}
+                          className="object-contain"
+                        />
+                        <span>{item.value.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-400">Total Value:</span>
+            <span>{formatNumber(trade.sendingValue)}</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Avatar className="w-8 h-8">
+              <AvatarImage src={trade.receiver.avatar} />
+              <AvatarFallback>{trade.receiver.displayName[0]}</AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium truncate">{trade.receiver.displayName}</span>
+          </div>
+          <div className="space-y-2">
+            {trade.receiving.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
+                <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+                  <Image
+                    src={item.thumbnail}
+                    alt={item.name}
+                    className="object-cover"
+                    fill
+                    sizes="40px"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-zinc-100 truncate flex-shrink">{item.name}</span>
+                    {item.serial && (
+                      <div className="flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                        <LimitedIcon className="w-3 h-3" />
+                        <span className="text-xs">{item.serial}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-zinc-300">
+                    {item.rap && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <RobuxIcon className="w-3 h-3" />
+                        <span>{item.rap.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {item.value && (
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Image
+                          src="/icons/rolimons_logo_icon_blue.png"
+                          alt="Value"
+                          width={12}
+                          height={12}
+                          className="object-contain"
+                        />
+                        <span>{item.value.toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-zinc-400">Total Value:</span>
+            <span>{formatNumber(trade.receivingValue)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between text-sm pt-3 border-t border-zinc-800">
+        <div className="flex items-center gap-2">
+          <Image
+            src="/icons/rolimons_logo_icon_blue.png"
+            alt="RoTools"
+            width={16}
+            height={16}
           />
-          <div>
-            <div className="text-sm font-medium text-zinc-100">{trade.user.displayName}</div>
-            <div className="text-xs text-zinc-400">@{trade.user.name}</div>
-          </div>
+          <span className="font-medium">RoTools Trader</span>
         </div>
-        <div className="text-xs text-zinc-400">
-          {format(new Date(trade.created), 'MMM d, yyyy')}
-        </div>
-      </div>
-
-      {/* Trade Content */}
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <div className="text-xs font-medium text-zinc-400 mb-2">Receiving</div>
-          <ItemList items={trade.items.offering} type="offering" />
-          <div className="mt-2 text-xs text-zinc-400">
-            Total Value: <span className="text-zinc-100">{offeringTotal.toLocaleString()}</span>
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-medium text-zinc-400 mb-2">Giving</div>
-          <ItemList items={trade.items.requesting} type="requesting" />
-          <div className="mt-2 text-xs text-zinc-400">
-            Total Value: <span className="text-zinc-100">{requestingTotal.toLocaleString()}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Summary */}
-      <div className="border-t border-zinc-800 pt-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-zinc-400">Value Difference:</span>
-          <div className="flex items-center gap-1">
-            <Image
-              src="/icons/rolimons_logo_icon_blue.png"
-              alt="Value"
-              width={14}
-              height={14}
-              className="object-contain"
-            />
-            <span className={`text-sm font-medium ${difference > 0 ? 'text-green-500' : difference < 0 ? 'text-red-500' : 'text-zinc-100'}`}>
-              {difference > 0 ? '+' : ''}{difference.toLocaleString()} ({percentage > 0 ? '+' : ''}{percentage.toFixed(0)}%)
+        <div className="flex items-center gap-2">
+          <span className="text-zinc-400">Value Diff:</span>
+          <span className={cn(
+            trade.valueDiff > 0 ? "text-green-400" : "text-red-400",
+            "shrink-0"
+          )}>
+            {trade.valueDiff > 0 ? "+" : ""}{formatNumber(trade.valueDiff)}
+            <span className="text-sm ml-1.5">
+              ({trade.valueDiffPercentage > 0 ? "+" : ""}
+              {trade.valueDiffPercentage}%)
             </span>
-          </div>
+          </span>
         </div>
-      </div>
-
-      {/* Watermark */}
-      <div className="text-center text-xs text-zinc-500 pt-2">
-        Generated by RoTools Trader
       </div>
     </div>
   );

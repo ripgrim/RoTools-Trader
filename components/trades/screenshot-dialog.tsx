@@ -1,196 +1,192 @@
 "use client"
 
-import { Trade } from '@/app/types/trade';
+import { Trade, TradeItem } from '@/app/types/trade';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Download, Share2, Copy, Check, Loader2 } from 'lucide-react';
 import { TradeScreenshot } from './trade-screenshot';
+import type { ScreenshotTrade } from './trade-screenshot';
 import { useScreenshot } from '@/hooks/use-screenshot';
 import { useState, useEffect } from 'react';
+import { cn, transformTradeForScreenshot } from "@/lib/utils";
 
 interface ScreenshotDialogProps {
-  trade: Trade;
+  trade: ScreenshotTrade;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialogProps) {
-  const { ref, isCapturing, capture } = useScreenshot();
-  const [isCopying, setIsCopying] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [downloadSuccess, setDownloadSuccess] = useState(false);
-  const [shareSuccess, setShareSuccess] = useState(false);
-  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const { generate, isGenerating, progress } = useScreenshot({
+    onComplete: setImageUrl,
+    onError: (error: string) => console.error('[Screenshot] Error:', error),
+  });
 
+  // Effect to start generation when dialog opens
   useEffect(() => {
-    if (!ref.current) return;
-    
-    const images = ref.current.getElementsByTagName('img');
-    let loadedCount = 0;
-    const totalImages = images.length;
+    if (open && !imageUrl && !isGenerating) {
+      generate(trade);
+    }
+  }, [open, imageUrl, isGenerating, trade, generate]);
 
-    const handleImageLoad = () => {
-      loadedCount++;
-      if (loadedCount === totalImages) {
-        setImagesLoaded(true);
-      }
-    };
-
-    Array.from(images).forEach(img => {
-      if (img.complete) {
-        handleImageLoad();
-      } else {
-        img.addEventListener('load', handleImageLoad);
-      }
-    });
-
-    return () => {
-      Array.from(images).forEach(img => {
-        img.removeEventListener('load', handleImageLoad);
-      });
-    };
-  }, [ref, open]);
-
-  // Reset success states when dialog opens/closes
+  // Reset state when dialog closes
   useEffect(() => {
-    setCopySuccess(false);
-    setDownloadSuccess(false);
-    setShareSuccess(false);
+    if (!open) {
+      setImageUrl(null);
+      setCopySuccess(false);
+    }
   }, [open]);
 
-  const captureWithCheck = async () => {
-    if (!imagesLoaded) {
-      await new Promise(resolve => {
-        const checkLoaded = () => {
-          if (imagesLoaded) {
-            resolve(true);
-          } else {
-            setTimeout(checkLoaded, 100);
-          }
-        };
-        checkLoaded();
-      });
-    }
-    return capture();
+  // Handle image download
+  const handleDownload = () => {
+    if (!imageUrl) return;
+    
+    const link = document.createElement('a');
+    link.href = imageUrl;
+    link.download = `trade-${trade.id}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const handleDownload = async () => {
-    try {
-      const dataUrl = await captureWithCheck();
-      const link = document.createElement('a');
-      link.href = dataUrl;
-      link.download = `trade-${trade.id}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setDownloadSuccess(true);
-      setTimeout(() => setDownloadSuccess(false), 2000);
-    } catch (error) {
-      console.error('Failed to download:', error);
-    }
-  };
-
+  // Handle image copy
   const handleCopy = async () => {
+    if (!imageUrl) return;
+    
     try {
-      setIsCopying(true);
-      const dataUrl = await captureWithCheck();
-      const blob = await fetch(dataUrl).then(r => r.blob());
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
       await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob })
+        new ClipboardItem({
+          [blob.type]: blob
+        })
       ]);
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    } finally {
-      setIsCopying(false);
+    } catch (err) {
+      console.error('Failed to copy image:', err);
     }
   };
 
+  // Handle image share
   const handleShare = async () => {
+    if (!imageUrl) return;
+    
     try {
-      const dataUrl = await captureWithCheck();
-      const blob = await fetch(dataUrl).then(r => r.blob());
+      const response = await fetch(imageUrl);
+      const blob = await response.blob();
       const file = new File([blob], `trade-${trade.id}.png`, { type: 'image/png' });
       
-      if ('share' in navigator && navigator.canShare?.({ files: [file] })) {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
-          files: [file],
-          title: 'Trade Screenshot',
-          text: 'Check out this trade from RoTools Trader!'
+          title: `Trade #${trade.id}`,
+          files: [file]
         });
-        setShareSuccess(true);
-        setTimeout(() => setShareSuccess(false), 2000);
+      } else {
+        console.warn('Sharing not supported on this platform');
       }
-    } catch (error) {
-      console.error('Failed to share:', error);
+    } catch (err) {
+      console.error('Failed to share image:', err);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-none">
-        <DialogHeader>
-          <DialogTitle>Trade Screenshot</DialogTitle>
-        </DialogHeader>
-        
-        <div ref={ref} className="relative">
-          <TradeScreenshot trade={trade} />
-          {!imagesLoaded && (
-            <div className="absolute inset-0 flex items-center justify-center bg-zinc-950/50">
-              <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[650px] p-6">
+          {isGenerating ? (
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="relative">
+                <svg
+                  className="w-16 h-16 rotate-[-90deg]"
+                  viewBox="0 0 100 100"
+                >
+                  <circle
+                    className="stroke-zinc-800"
+                    strokeWidth="8"
+                    fill="transparent"
+                    r="42"
+                    cx="50"
+                    cy="50"
+                  />
+                  <circle
+                    className="stroke-blue-500 transition-all duration-300"
+                    strokeWidth="8"
+                    fill="transparent"
+                    r="42"
+                    cx="50"
+                    cy="50"
+                    strokeDasharray={264}
+                    strokeDashoffset={264 - (264 * progress) / 100}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-sm font-medium">{progress}%</span>
+                </div>
+              </div>
+              <p className="text-sm text-zinc-400">Generating screenshot...</p>
             </div>
-          )}
-        </div>
+          ) : (
+            <>
+              <div className="aspect-[3/2] bg-zinc-950 rounded-lg overflow-hidden">
+                {imageUrl ? (
+                  <img
+                    src={imageUrl}
+                    alt="Trade Screenshot"
+                    className="w-full h-full object-contain"
+                  />
+                ) : (
+                  <div data-screenshot-target="true">
+                    <TradeScreenshot trade={trade} />
+                  </div>
+                )}
+              </div>
 
-        <div className="flex items-center justify-end gap-2 mt-4">
-          <Button
-            variant="outline"
-            className="gap-2"
-            onClick={handleCopy}
-            disabled={isCapturing || isCopying || !imagesLoaded}
-          >
-            {isCopying ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : copySuccess ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Copy className="w-4 h-4" />
-            )}
-            {isCopying ? 'Copying...' : copySuccess ? 'Copied!' : 'Copy'}
-          </Button>
-          {'share' in navigator && (
-            <Button
-              variant="outline"
-              className="gap-2"
-              onClick={handleShare}
-              disabled={isCapturing || !imagesLoaded}
-            >
-              {shareSuccess ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <Share2 className="w-4 h-4" />
-              )}
-              {shareSuccess ? 'Shared!' : 'Share'}
-            </Button>
+              <div className="flex items-center gap-2 mt-4">
+                <Button
+                  className="flex-1"
+                  onClick={handleDownload}
+                  disabled={!imageUrl}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={handleCopy}
+                  disabled={!imageUrl}
+                >
+                  {copySuccess ? (
+                    <Check className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Copy className="w-4 h-4 mr-2" />
+                  )}
+                  {copySuccess ? 'Copied' : 'Copy'}
+                </Button>
+                {typeof navigator !== 'undefined' && 'share' in navigator && (
+                  <Button
+                    className="flex-1"
+                    onClick={handleShare}
+                    disabled={!imageUrl}
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                )}
+              </div>
+            </>
           )}
-          <Button
-            variant="default"
-            className="gap-2"
-            onClick={handleDownload}
-            disabled={isCapturing || !imagesLoaded}
-          >
-            {isCapturing ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : downloadSuccess ? (
-              <Check className="w-4 h-4" />
-            ) : (
-              <Download className="w-4 h-4" />
-            )}
-            {isCapturing ? 'Generating...' : downloadSuccess ? 'Downloaded!' : 'Download'}
-          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Hidden element for screenshot capturing - only visible during generation */}
+      {isGenerating && !imageUrl && (
+        <div className="fixed -left-[9999px] -top-[9999px]" data-screenshot-target="true">
+          <TradeScreenshot trade={trade} />
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 } 
