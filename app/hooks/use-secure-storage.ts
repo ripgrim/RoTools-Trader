@@ -8,7 +8,7 @@ export function useSecureStorage() {
   }, []);
 
   const getSecureValue = async (key: string): Promise<string | null> => {
-    if (!mounted) return null;
+    if (!mounted || typeof window === 'undefined') return null;
     try {
       const value = localStorage.getItem(key);
       return value;
@@ -19,7 +19,7 @@ export function useSecureStorage() {
   };
 
   const setSecureValue = async (key: string, value: string): Promise<void> => {
-    if (!mounted) return;
+    if (!mounted || typeof window === 'undefined') return;
     try {
       localStorage.setItem(key, value);
     } catch (error) {
