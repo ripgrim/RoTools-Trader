@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { attemptRobloxLogin } from '@/app/utils/auth-utils';
 import { Drawer } from 'vaul';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { useRouter } from 'next/navigation';
 
 interface RobloxAuthDialogProps {
   open: boolean;
@@ -29,6 +30,7 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const router = useRouter();
   
   // Debug logging for dialog state
   useEffect(() => {
@@ -64,7 +66,11 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
       () => {
         console.log("Login successful via dialog, will close shortly");
         // Close the dialog after a brief delay
-        setTimeout(() => onOpenChange(false), 500);
+        setTimeout(() => {
+          onOpenChange(false);
+          // Refresh the page to trigger a new data fetch
+          router.refresh();
+        }, 500);
       },
       // Error callback
       (errorMessage) => {
@@ -74,7 +80,7 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
     );
     
     setIsSubmitting(false);
-  }, [cookie, login, onOpenChange, isSubmitting]);
+  }, [cookie, login, onOpenChange, router, isSubmitting]);
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (!isSubmitting) {

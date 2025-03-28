@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useRobloxAuthContext } from '@/app/providers/roblox-auth-provider';
+import { UserIcon } from '@/components/ui/user-icon';
 
 // Interface for Roblox trade API response
 interface RobloxAsset {

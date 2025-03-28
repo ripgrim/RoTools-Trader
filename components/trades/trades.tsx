@@ -53,10 +53,6 @@ function EmptyTradeDetail({ type }: { type: string }) {
       </div>
       <h3 className="text-xl font-semibold text-zinc-300 mb-2">{content.title}</h3>
       <p className="text-zinc-500 mb-6 max-w-xs">{content.description}</p>
-      <div className="bg-zinc-900/30 p-4 rounded border border-zinc-800 text-zinc-400 text-sm max-w-sm">
-        <PackageOpen className="w-4 h-4 inline-block mr-2 mb-1" />
-        Try switching to a different tab to view other types of trades
-      </div>
     </div>
   );
 }
