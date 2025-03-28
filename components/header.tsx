@@ -16,8 +16,8 @@ import { RobloxAuthStatus } from "./auth/roblox-auth-status";
 
 export function Header() {
   return (
-    <header className="border-b border-zinc-800 bg-zinc-900/50">
-      <div className="container mx-auto px-4">
+    <header className="border-b border-zinc-800 bg-zinc-900/50 w-full flex justify-center">
+      <div className="container w-full px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">

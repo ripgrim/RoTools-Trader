@@ -525,6 +525,38 @@ export function useTrades() {
     }
   }, [isAuthenticated, fetchAllTrades]);
   
+  // Remove a specific trade from the displayed trades and cached trades
+  const removeTrade = useCallback((tradeId: string | number) => {
+    const id = String(tradeId);
+    console.log(`Removing trade ID: ${id} from displayed trades and cache`);
+    
+    // Update displayed trades
+    setDisplayedTrades(current => ({
+      inbound: current.inbound.filter(trade => String(trade.id) !== id),
+      outbound: current.outbound.filter(trade => String(trade.id) !== id),
+      completed: current.completed.filter(trade => String(trade.id) !== id)
+    }));
+    
+    // Update all fetched trades
+    setAllFetchedTrades(current => ({
+      inbound: current.inbound.filter(trade => String(trade.id) !== id),
+      outbound: current.outbound.filter(trade => String(trade.id) !== id),
+      completed: current.completed.filter(trade => String(trade.id) !== id)
+    }));
+    
+    // Also remove from the shared cache
+    tradeListCache.forEach((value, key) => {
+      const updatedTrades = value.trades.filter(trade => String(trade.id) !== id);
+      if (updatedTrades.length !== value.trades.length) {
+        console.log(`Removed trade ID: ${id} from cache type: ${key}`);
+        tradeListCache.set(key, {
+          trades: updatedTrades,
+          timestamp: value.timestamp
+        });
+      }
+    });
+  }, []);
+
   return {
     trades,
     isLoading,
@@ -537,6 +569,7 @@ export function useTrades() {
     isCountLoading,
     refreshInboundCount: fetchInboundCount,
     refetch: fetchAllTrades,
+    removeTrade,
     clearCache: () => {
       tradeListCache.clear();
       console.log("Cleared all trade list caches");

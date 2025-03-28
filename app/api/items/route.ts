@@ -58,3 +58,83 @@ export async function GET() {
     );
   }
 } 
+
+/*
+rolimons.com/items/v2/itemdetails
+sample response:
+{
+  "success": true,
+  "item_count": 2523,
+  "items": {
+    "1028606": [
+      "Red Baseball Cap",
+      "",
+      1283, -1, 1283, -1, -1, -1, -1, -1, 1],
+    "1028720": [
+      "Classic ROBLOX Viking Helm",
+      "",
+      10350, -1, 10350, -1, -1, -1, -1, -1, 1],
+    ...
+  }
+}
+
+rubric:
+[item_name, acronym, rap, value, default_value, demand, trend, projected, hyped, rare]
+
+item_name:
+- string
+acronym:
+- string
+rap:
+- number
+value:
+- number
+default_value:
+- number
+demand:
+- number
+trend:
+- number
+projected:
+- number
+hyped:
+- number
+rare:
+- number
+
+Demand:
+
+```
+-1 | None  
+0  | Terrible  
+1  | Low  
+2  | Normal  
+3  | High  
+4  | Amazing  
+```
+Trend:
+```
+-1 | None  
+0  | Lowering  
+1  | Unstable  
+2  | Stable  
+3  | Raising  
+4  | Fluctuating  
+```
+Projected:
+```
+-1 | False  
+1  | True  
+```
+Hyped:
+```
+-1 | False  
+1  | True  
+```
+Rare:
+```
+-1 | False  
+1  | True  
+```
+
+*/

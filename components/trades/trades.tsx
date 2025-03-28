@@ -98,13 +98,36 @@ export function Trades({ trades }: { trades?: Trade[] }) {
     }
   };
 
-  // Register the refresh function with the global TradeActions context
-  const { registerRefreshFunction } = useTradeActions();
+  // Register the refresh functions with the global TradeActions context
+  const { 
+    registerRefreshFunction, 
+    registerRefreshAllTradesFunction,
+    registerRemoveTradeFunction
+  } = useTradeActions();
 
-  // Register the refresh function
+  // Register all the callback functions
   useEffect(() => {
     registerRefreshFunction(refreshInboundCount);
-  }, [registerRefreshFunction, refreshInboundCount]);
+    registerRefreshAllTradesFunction(refreshAllTrades);
+    registerRemoveTradeFunction((tradeId) => {
+      // When a trade is removed, we need to:
+      // If the removed trade was selected, clear the selection
+      if (selectedTradeId === tradeId) {
+        setSelectedTradeId(null);
+        setDisplayTrade(null);
+        setIsDrawerOpen(false);
+      }
+      
+      console.log(`Removed trade ID: ${tradeId} from displayed trades`);
+    });
+  }, [
+    registerRefreshFunction, 
+    refreshInboundCount, 
+    registerRefreshAllTradesFunction, 
+    refreshAllTrades,
+    registerRemoveTradeFunction,
+    selectedTradeId
+  ]);
 
   // Handle window resize and initial mobile check
   useEffect(() => {

@@ -8,6 +8,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * Format a number with commas as thousands separators
+ */
+export function formatNumber(num: number | null | undefined): string {
+  if (num === null || num === undefined) return '0';
+  return num.toLocaleString('en-US');
+}
+
 export function transformTradeForScreenshot(trade: Trade): ScreenshotTrade {
   // Calculate total values
   const sendingValue = trade.items.requesting.reduce((sum, item) => 

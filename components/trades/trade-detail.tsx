@@ -3,7 +3,7 @@
 import { Trade, TradeItem as TradeItemType } from '@/app/types/trade';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftRight, Camera, CheckCircle, Circle, CircleArrowOutUpLeft, XCircle, Loader2 } from 'lucide-react';
+import { ArrowLeftRight, Camera, CheckCircle, Circle, CircleArrowOutUpLeft, XCircle, Loader2, Construction, HardHat } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LimitedIcon } from '@/components/ui/limited-icon';
 import { RobuxIcon } from '@/components/ui/robux-icon';
@@ -12,7 +12,7 @@ import { Drawer } from 'vaul';
 import { useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { ScreenshotDialog } from './screenshot-dialog';
-import { transformTradeForScreenshot } from "@/lib/utils";
+import { transformTradeForScreenshot, formatNumber } from "@/lib/utils";
 import { useAvatarThumbnail } from '@/app/hooks/use-avatar-thumbnail';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TradeItem as TradeItemComponent } from './trade-item';
@@ -20,6 +20,7 @@ import { useRobloxAuthContext } from '@/app/providers/roblox-auth-provider';
 import { useToast } from '@/hooks/use-toast';
 import { useTradeActions } from '@/app/providers/trade-actions-provider';
 import { useRouter } from "next/navigation";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TradeDetailProps {
   trade: Trade;
@@ -34,7 +35,7 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
-  const [isCountering, setIsCountering] = useState(false);
+  const [isCountering] = useState(false);
   const { avatar, isLoading: isAvatarLoading } = useAvatarThumbnail(trade.user.id, trade.user.avatar);
   const { cookie } = useRobloxAuthContext();
   const { toast } = useToast();
@@ -50,6 +51,16 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
   const getItemRap = (item: TradeItemType): number | null => {
     const rap = item.rap;
     return typeof rap === 'number' ? rap : null;
+  };
+
+  // New function to get preferred value, prioritizing value over RAP
+  const getPreferredValue = (item: TradeItemType): number | null => {
+    // Get the value, or if it's -1 (unvalued), treat as null
+    const value = getItemValue(item);
+    const hasValidValue = value !== null && value !== -1;
+    
+    // Return value if it exists and is valid, otherwise fallback to RAP
+    return hasValidValue ? value : getItemRap(item);
   };
 
   const generateImage = async () => {
@@ -224,23 +235,12 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
     }
   };
 
-  const handleCounterTrade = async () => {
-    if (isCountering) return;
-    
-    setIsCountering(true);
-    try {
-      await counterTrade(trade.id);
-      // The navigation happens inside the counterTrade function
-    } catch (error) {
-      console.error("Error creating counter trade:", error);
-      toast({
-        title: "Counter Trade Error",
-        description: "Failed to create counter trade. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsCountering(false);
-    }
+  const handleCounterTrade = () => {
+    toast({
+      title: "Under Construction",
+      description: "The counter trade feature is coming soon!",
+      variant: "default"
+    });
   };
 
   const content = (
@@ -289,6 +289,68 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
       </div>
 
       <div ref={tradeContentRef} className="p-6 space-y-8 bg-background">
+        {/* Trade Comparison Banner */}
+        <div className="mb-6">
+          <div className="relative h-10 bg-zinc-900/50 border border-zinc-800 overflow-hidden">
+            {/* Calculate value difference percentage */}
+            {(() => {
+              const offeringValue = calculateTotal(trade.items.offering, getPreferredValue);
+              const requestingValue = calculateTotal(trade.items.requesting, getPreferredValue);
+              const difference = offeringValue - requestingValue;
+              const percentage = requestingValue > 0 
+                ? (difference / requestingValue) * 100 
+                : 0;
+              
+              // Cap at reasonable visuals
+              const cappedPercentage = Math.min(Math.max(percentage, -100), 100);
+              const position = 50 + (cappedPercentage / 2);
+              
+              // Calculate colors based on win/loss
+              const startColor = difference > 0 ? 'from-green-800/20' : 'from-red-800/20';
+              const endColor = difference > 0 ? 'to-green-500/30' : 'to-red-500/30';
+              
+              return (
+                <>
+                  {/* Gradient background representing win/loss */}
+                  <div 
+                    className={`absolute top-0 bottom-0 bg-gradient-to-r ${startColor} ${endColor}`}
+                    style={{ 
+                      left: difference > 0 ? '50%' : `${position}%`, 
+                      right: difference > 0 ? `${100 - position}%` : '50%',
+                    }}
+                  />
+                  
+                  {/* Center line */}
+                  <div className="absolute left-1/2 top-0 bottom-0 w-px bg-zinc-700" />
+                  
+                  {/* Value display */}
+                  <div className="flex h-full justify-between items-center relative z-10 px-4">
+                    <div className="text-white font-medium text-sm">
+                      {formatNumber(requestingValue)} R$
+                    </div>
+                    <div className="text-white text-xs font-bold">
+                      {difference === 0 ? (
+                        <span className="text-zinc-400">EVEN</span>
+                      ) : difference > 0 ? (
+                        <span className="text-green-400">+{formatNumber(difference)} R$ ({percentage > 0 ? '+' : ''}{percentage.toFixed(0)}%)</span>
+                      ) : (
+                        <span className="text-red-400">{formatNumber(difference)} R$ ({percentage.toFixed(0)}%)</span>
+                      )}
+                    </div>
+                    <div className="text-white font-medium text-sm">
+                      {formatNumber(offeringValue)} R$
+                    </div>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+          <div className="flex justify-between text-xs text-zinc-500 mt-1 px-1">
+            <div>You Give</div>
+            <div>You Receive</div>
+          </div>
+        </div>
+        
         {/* Items you will give/gave */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-zinc-100 mb-4">
@@ -345,6 +407,17 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
                     <span className="text-zinc-100">{calculateTotal(trade.items.offering, getItemValue).toLocaleString()}</span>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-400">Effective Total:</span>
+                  <div className="flex items-center gap-1 text-blue-500 font-semibold">
+                    <span className="text-zinc-100 group relative">
+                      {calculateTotal(trade.items.offering, getPreferredValue).toLocaleString()}
+                      <span className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        Uses item value when available, falls back to RAP when value is not set
+                      </span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
             <div>
@@ -374,6 +447,17 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
                     <span className="text-zinc-100">{calculateTotal(trade.items.requesting, getItemValue).toLocaleString()}</span>
                   </div>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-400">Effective Total:</span>
+                  <div className="flex items-center gap-1 text-blue-500 font-semibold">
+                    <span className="text-zinc-100 group relative">
+                      {calculateTotal(trade.items.requesting, getPreferredValue).toLocaleString()}
+                      <span className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        Uses item value when available, falls back to RAP when value is not set
+                      </span>
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -381,6 +465,26 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
           {/* Trade Difference */}
           <div className="mt-4 pt-4 border-t border-zinc-800">
             <div className="flex justify-between items-center">
+              <span className="text-zinc-400 flex items-center gap-1">
+                Effective Difference:
+                <span className="relative group">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5 text-zinc-500">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <span className="absolute bottom-full left-0 mb-2 w-64 p-2 bg-zinc-900 border border-zinc-800 text-xs text-zinc-400 rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                    Combined calculation using item values when available and RAP as fallback. This is the most accurate representation of the trade's fairness.
+                  </span>
+                </span>
+              </span>
+              <div className="flex items-center gap-1">
+                <span className={`text-lg font-medium ${calculateDifference(trade.items.offering, trade.items.requesting, getPreferredValue) > 0 ? 'text-green-500' : calculateDifference(trade.items.offering, trade.items.requesting, getPreferredValue) < 0 ? 'text-red-500' : 'text-zinc-100'}`}>
+                  {calculateDifference(trade.items.offering, trade.items.requesting, getPreferredValue) > 0 ? '+' : ''}{calculateDifference(trade.items.offering, trade.items.requesting, getPreferredValue).toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-between items-center mt-2">
               <span className="text-zinc-400">Value Difference:</span>
               <div className="flex items-center gap-1">
                 <Image
@@ -415,7 +519,7 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
                 size="lg"
                 className="w-full md:w-auto border-zinc-800 text-zinc-400 hover:bg-background hover:text-zinc-100 hover:border-zinc-600"
                 onClick={handleDeclineTrade}
-                disabled={isDeclining || isAccepting || isCountering}
+                disabled={isDeclining || isAccepting}
               >
                 {isDeclining ? (
                   <>
@@ -429,31 +533,40 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
                   </>
                 )}
               </Button>
-              <Button
-                variant="outline"
-                size="lg"
-                className="w-full md:w-auto border-zinc-800 text-zinc-400 hover:bg-background hover:text-zinc-100 hover:border-zinc-600"
-                onClick={handleCounterTrade}
-                disabled={isCountering || isAccepting || isDeclining}
-              >
-                {isCountering ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Preparing Counter...
-                  </>
-                ) : (
-                  <>
-                    <ArrowLeftRight className="w-5 h-5 mr-2" />
-                    Counter Trade
-                  </>
-                )}
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="w-full md:w-auto border-zinc-800 text-zinc-400 hover:bg-background hover:text-zinc-100 hover:border-zinc-600 group relative overflow-hidden"
+                      onClick={handleCounterTrade}
+                      disabled={true}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-zinc-800/40 to-white/20 via-black/10 bg-[length:400%_100%] animate-caution-stripe" />
+                      <div className="relative flex items-center">
+                        <Construction className="w-5 h-5 mr-2" />
+                        <span className="relative">
+                          Counter Trade
+                          <span className="absolute -top-1 -right-2 text-[8px] bg-white text-black px-1 py-0.5 rounded-sm font-bold tracking-tighter rotate-12">SOON!</span>
+                        </span>
+                      </div>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <div className="flex items-center gap-2">
+                      <HardHat className="w-4 h-4 text-white" />
+                      <span>Counter trade functionality is under construction! Check back soon for this exciting feature.</span>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full md:w-auto border-zinc-800 text-zinc-400 hover:bg-background hover:text-zinc-100 hover:border-zinc-600"
                 onClick={handleAcceptTrade}
-                disabled={isAccepting || isDeclining || isCountering}
+                disabled={isAccepting || isDeclining}
               >
                 {isAccepting ? (
                   <>
