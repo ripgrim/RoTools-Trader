@@ -76,6 +76,9 @@ const TREND_LABELS = {
   "4": "Fluctuating"
 } as const;
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 export async function GET(request: Request) {
   try {
     // Get the cookie from headers

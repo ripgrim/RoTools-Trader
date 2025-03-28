@@ -362,7 +362,7 @@ export function useRobloxAuth() {
       
       // Try to refresh the cookie which also validates it
       let isValid = false;
-      let refreshedCookie = null;
+      let refreshedCookie: string | null = null;
       
       try {
         refreshedCookie = await refreshCookie(currentCookie);

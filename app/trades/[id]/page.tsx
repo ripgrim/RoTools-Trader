@@ -5,9 +5,14 @@ import { useTradeDetails } from '@/app/hooks/use-trade-details';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { TradeSkeleton } from '@/components/trades/trade-skeleton';
+import { useState } from 'react';
+
+// Mark this page as dynamic to prevent static generation
+export const dynamic = 'force-dynamic';
 
 export default function TradePage({ params }: { params: { id: string } }) {
   const { trade, isLoading, error } = useTradeDetails(params.id);
+  const [isOpen, setIsOpen] = useState(true);
   
   // Show loading state
   if (isLoading) {
@@ -27,5 +32,9 @@ export default function TradePage({ params }: { params: { id: string } }) {
     </div>;
   }
 
-  return <TradeDetail trade={trade} />;
+  return <TradeDetail 
+    trade={trade} 
+    isOpen={isOpen}
+    onClose={setIsOpen}
+  />;
 } 

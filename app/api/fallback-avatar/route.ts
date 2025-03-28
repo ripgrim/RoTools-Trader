@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
+
 // Default SVG avatar
 const DEFAULT_AVATAR = `<svg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'>
   <rect width='150' height='150' fill='#2A2A2A'/>

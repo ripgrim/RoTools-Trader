@@ -22,7 +22,6 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <span className="text-xl font-bold text-zinc-100">RoTools</span>
-            <span className="text-sm text-zinc-500">Trader</span>
           </Link>
 
           <div className="flex items-center gap-4">
