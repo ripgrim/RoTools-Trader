@@ -1,15 +1,19 @@
 "use client";
 
 import { Trades } from '@/components/trades/trades';
-import { mockTrades } from '@/app/mocks/trades';
-import { useToken } from '@/providers/token-provider';
 import { TradesSkeleton } from '@/components/skeletons/trades';
-import { TokenDialog } from '@/components/token-dialog';
+import { useRobloxAuthContext } from '@/app/providers/roblox-auth-provider';
+import { RobloxAuthDialog } from '@/components/auth/roblox-auth-dialog';
+import { useTrades } from '@/app/hooks/use-trades';
+import { useState } from 'react';
 
 export default function Home() {
-  const { hasToken, isLoading } = useToken();
+  const { isAuthenticated, isLoading: authLoading } = useRobloxAuthContext();
+  const { trades, isLoading: tradesLoading, error } = useTrades();
+  const [isDialogOpen, setIsDialogOpen] = useState(!isAuthenticated && !authLoading);
 
-  if (isLoading) {
+  // Show loading state while auth is being determined or trades are loading
+  if (authLoading || (isAuthenticated && tradesLoading)) {
     return (
       <main className="min-h-screen bg-background">
         <div className="h-screen">
@@ -22,8 +26,11 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background">
       <div className="h-screen">
-        {hasToken ? <Trades trades={mockTrades} /> : <TradesSkeleton />}
-        <TokenDialog open={!hasToken} />
+        {isAuthenticated ? <Trades trades={trades} /> : <TradesSkeleton />}
+        <RobloxAuthDialog 
+          open={isDialogOpen} 
+          onOpenChange={setIsDialogOpen} 
+        />
       </div>
     </main>
   );

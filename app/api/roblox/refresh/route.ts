@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-// For development testing - set to true to skip actual Roblox API calls
-const MOCK_MODE = true;
+// Set this to false to use real Roblox API calls
+const MOCK_MODE = false;
 
 // Utility function to fetch CSRF token
 async function fetchSessionCSRFToken(roblosecurityCookie: string): Promise<string | null> {
@@ -20,7 +20,7 @@ async function fetchSessionCSRFToken(roblosecurityCookie: string): Promise<strin
     });
     
     const token = response.headers.get('x-csrf-token');
-    console.log("CSRF token response:", { status: response.status, token });
+    console.log("CSRF token response:", { status: response.status, token: token ? "Present" : "Missing" });
     
     return token || null;
   } catch (error) {
@@ -44,7 +44,7 @@ async function generateAuthTicket(roblosecurityCookie: string): Promise<string |
       throw new Error("Failed to obtain CSRF token");
     }
     
-    console.log("Making auth ticket request with CSRF token:", csrfToken);
+    console.log("Making auth ticket request with CSRF token");
     const response = await fetch("https://auth.roblox.com/v1/authentication-ticket", {
       method: 'POST',
       headers: {
@@ -62,6 +62,12 @@ async function generateAuthTicket(roblosecurityCookie: string): Promise<string |
 
     const ticket = response.headers.get('rbx-authentication-ticket');
     console.log("Auth ticket response:", { status: response.status, ticket: ticket ? "Present" : "Missing" });
+    
+    if (!ticket) {
+      console.error("No authentication ticket in response headers");
+      const headers = Object.fromEntries(response.headers.entries());
+      console.log("Response headers:", headers);
+    }
     
     return ticket || null;
   } catch (error) {
@@ -100,15 +106,24 @@ async function redeemAuthTicket(authTicket: string): Promise<{
       throw new Error(`Ticket redemption failed: ${response.status}`);
     }
 
-    const setCookieHeader = response.headers.get('set-cookie') || "";
+    const setCookieHeader = response.headers.get('set-cookie');
     console.log("Set-Cookie header received:", setCookieHeader ? "Present" : "Missing");
+    
+    if (!setCookieHeader) {
+      console.log("Headers received:", Object.fromEntries(response.headers.entries()));
+      throw new Error("No Set-Cookie header in response");
+    }
     
     const refreshedCookieMatch = setCookieHeader.match(/(_\|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.\|_[A-Za-z0-9]+)/);
     console.log("Cookie match result:", refreshedCookieMatch ? "Found" : "Not found");
 
+    if (!refreshedCookieMatch) {
+      throw new Error("Could not extract .ROBLOSECURITY cookie from response");
+    }
+
     return {
       success: true,
-      refreshedCookie: refreshedCookieMatch ? refreshedCookieMatch[0] : undefined
+      refreshedCookie: refreshedCookieMatch[0]
     };
   } catch (error) {
     console.error("Redemption error:", error);
@@ -116,6 +131,33 @@ async function redeemAuthTicket(authTicket: string): Promise<{
       success: false,
       error: error instanceof Error ? error.message : "Unknown error"
     };
+  }
+}
+
+// Function to validate a cookie directly
+async function validateCookie(roblosecurityCookie: string): Promise<boolean> {
+  try {
+    console.log("Validating cookie directly");
+    const response = await fetch("https://users.roblox.com/v1/users/authenticated", {
+      method: 'GET',
+      headers: {
+        'Cookie': `.ROBLOSECURITY=${roblosecurityCookie}`
+      }
+    });
+    
+    const isValid = response.ok;
+    console.log("Cookie validation result:", isValid);
+    
+    if (isValid) {
+      // Try to get user info
+      const userData = await response.json();
+      console.log("User data:", userData);
+    }
+    
+    return isValid;
+  } catch (error) {
+    console.error("Cookie validation error:", error);
+    return false;
   }
 }
 
@@ -132,6 +174,13 @@ export async function POST(request: Request) {
     // Validate input
     if (!roblosecurityCookie) {
       return NextResponse.json({ error: "Cookie is required" }, { status: 400 });
+    }
+    
+    // First validate the cookie directly
+    const isValid = await validateCookie(roblosecurityCookie);
+    
+    if (!isValid && !MOCK_MODE) {
+      return NextResponse.json({ error: "Invalid cookie" }, { status: 401 });
     }
 
     // Generate authentication ticket

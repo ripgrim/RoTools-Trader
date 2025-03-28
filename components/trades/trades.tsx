@@ -5,17 +5,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TradeList } from './trade-list';
 import { Trade } from '@/app/types/trade';
 import { TradeDetail } from './trade-detail';
-import { mockTrades } from '@/app/mocks/trades';
+import { useTradeDetails } from '@/app/hooks/use-trade-details';
+import { TradeSkeleton } from './trade-skeleton';
+import { TradeItemSkeleton } from './trade-item-skeleton';
 
 interface TradesProps {
   trades: Trade[];
 }
 
 export function Trades({ trades }: TradesProps) {
-  const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
+  const [selectedTradeId, setSelectedTradeId] = useState<string | number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState('inbound');
+  
+  // Fetch detailed trade information for the selected trade
+  const { trade: detailedTrade, isLoading: isTradeLoading, error: tradeError } = useTradeDetails(selectedTradeId);
+  
+  // We'll use either the detailed trade (if loaded) or the original list item
+  const [displayTrade, setDisplayTrade] = useState<Trade | null>(null);
 
   // Handle window resize and initial mobile check
   useEffect(() => {
@@ -34,36 +42,47 @@ export function Trades({ trades }: TradesProps) {
 
   // Auto-select first trade on desktop
   useEffect(() => {
-    if (!isMobile && trades.length > 0 && !selectedTrade) {
-      setSelectedTrade(trades[0]);
+    if (!isMobile && trades.length > 0 && !selectedTradeId) {
+      setSelectedTradeId(trades[0].id);
+      setDisplayTrade(trades[0]);
       setIsDrawerOpen(false);
     }
-  }, [trades, isMobile, selectedTrade]);
+  }, [trades, isMobile, selectedTradeId]);
+
+  // Update the display trade when detailed trade data is loaded
+  useEffect(() => {
+    if (detailedTrade) {
+      // If we have a detailed trade, use it
+      setDisplayTrade(detailedTrade);
+    } else if (selectedTradeId && !isTradeLoading) {
+      // If loading failed or there's an error, fall back to the list item
+      const fallbackTrade = trades.find(t => t.id === selectedTradeId);
+      if (fallbackTrade) setDisplayTrade(fallbackTrade);
+    }
+  }, [detailedTrade, isTradeLoading, selectedTradeId, trades]);
 
   const handleTradeSelect = (trade: Trade) => {
     console.log('Selected Trade:', {
       id: trade.id,
-      user: trade.user,
-      status: trade.status,
-      items: {
-        offering: trade.items.offering.map(item => ({
-          name: item.name,
-          rap: item.rap,
-          value: item.value,
-          serial: item.serial
-        })),
-        requesting: trade.items.requesting.map(item => ({
-          name: item.name,
-          rap: item.rap,
-          value: item.value,
-          serial: item.serial
-        }))
-      },
-      created: trade.created,
-      expiration: trade.expiration,
-      isActive: trade.isActive
+      user: trade.user.name,
+      status: trade.status
     });
-    setSelectedTrade(trade);
+    
+    // First, check if this is a different trade than currently selected
+    if (selectedTradeId !== trade.id) {
+      // If switching to a different trade, clear current display first
+      setDisplayTrade(null);
+      // Then set the new ID which will trigger the data fetch
+      setSelectedTradeId(trade.id);
+      // After clearing, set the basic trade info for immediate display while loading detailed data
+      // Use a timeout to ensure state updates are processed in the correct order
+      setTimeout(() => {
+        // Create a clean copy to avoid reference issues
+        const cleanTrade = JSON.parse(JSON.stringify(trade));
+        setDisplayTrade(cleanTrade);
+      }, 0);
+    }
+    
     setIsDrawerOpen(true);
   };
 
@@ -75,8 +94,38 @@ export function Trades({ trades }: TradesProps) {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setSelectedTrade(null);
+    setSelectedTradeId(null);
+    setDisplayTrade(null);
     setIsDrawerOpen(false);
+  };
+
+  // Render the trade details or a loading state
+  const renderTradeDetail = () => {
+    if (!displayTrade) return null;
+    
+    // Check if we're loading a new trade (using ID comparison)
+    const isLoadingNewTrade = isTradeLoading && (!detailedTrade || detailedTrade.id !== displayTrade.id);
+    
+    if (isLoadingNewTrade) {
+      // Show skeleton when loading a new trade's details
+      return (
+        <TradeSkeleton 
+          isOpen={!isMobile || isDrawerOpen}
+          onClose={handleDrawerClose}
+          requestingCount={displayTrade.items.requesting.length}
+          offeringCount={displayTrade.items.offering.length}
+        />
+      );
+    }
+    
+    // If we have the detailed trade data or are falling back to list data
+    return (
+      <TradeDetail 
+        trade={displayTrade} 
+        isOpen={!isMobile || isDrawerOpen}
+        onClose={handleDrawerClose}
+      />
+    );
   };
 
   return (
@@ -97,43 +146,36 @@ export function Trades({ trades }: TradesProps) {
           <TabsContent value="inbound" className="flex-1 px-6 py-4">
             <TradeList 
               trades={trades.filter(t => t.status === 'Inbound')}
-              selectedTrade={selectedTrade}
+              selectedTrade={displayTrade}
               onSelectTrade={handleTradeSelect}
+              type="inbound"
             />
           </TabsContent>
           <TabsContent value="outbound" className="flex-1 px-6 py-4">
             <TradeList 
               trades={trades.filter(t => t.status === 'Outbound')}
-              selectedTrade={selectedTrade}
+              selectedTrade={displayTrade}
               onSelectTrade={handleTradeSelect}
+              type="outbound"
             />
           </TabsContent>
           <TabsContent value="completed" className="flex-1 px-6 py-4">
             <TradeList 
               trades={trades.filter(t => t.status === 'Completed')}
-              selectedTrade={selectedTrade}
+              selectedTrade={displayTrade}
               onSelectTrade={handleTradeSelect}
+              type="completed"
             />
           </TabsContent>
         </Tabs>
       </div>
       <div className="hidden md:block flex-1 h-full overflow-auto">
-        {selectedTrade && (
-          <TradeDetail 
-            trade={selectedTrade} 
-            isOpen={!isMobile}
-            onClose={handleDrawerClose}
-          />
-        )}
+        {renderTradeDetail()}
       </div>
       {/* Mobile Trade Detail */}
-      {selectedTrade && (
+      {displayTrade && (
         <div className="md:hidden">
-          <TradeDetail 
-            trade={selectedTrade} 
-            isOpen={isDrawerOpen}
-            onClose={handleDrawerClose}
-          />
+          {renderTradeDetail()}
         </div>
       )}
     </div>

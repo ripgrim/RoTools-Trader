@@ -1,6 +1,6 @@
 "use client"
 
-import { Trade, TradeItem } from '@/app/types/trade';
+import { Trade, TradeItem as TradeItemType } from '@/app/types/trade';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ArrowLeftRight, Camera, CheckCircle, Circle, CircleArrowOutUpLeft, XCircle, Loader2 } from 'lucide-react';
@@ -13,6 +13,9 @@ import { useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { ScreenshotDialog } from './screenshot-dialog';
 import { transformTradeForScreenshot } from "@/lib/utils";
+import { useAvatarThumbnail } from '@/app/hooks/use-avatar-thumbnail';
+import { Skeleton } from '@/components/ui/skeleton';
+import { TradeItem as TradeItemComponent } from './trade-item';
 
 interface TradeDetailProps {
   trade: Trade;
@@ -24,6 +27,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
   const tradeContentRef = useRef<HTMLDivElement>(null);
   const [isScreenshotOpen, setIsScreenshotOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const { avatar, isLoading: isAvatarLoading } = useAvatarThumbnail(trade.user.id, trade.user.avatar);
 
   const generateImage = async () => {
     if (!tradeContentRef.current) return;
@@ -100,17 +104,17 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
   }, [trade]);
 
   // Helper functions for calculations
-  const getItemValue = (item: TradeItem): number | null => {
+  const getItemValue = (item: TradeItemType): number | null => {
     const value = item.value;
     return typeof value === 'number' ? value : null;
   };
   
-  const getItemRap = (item: TradeItem): number | null => {
+  const getItemRap = (item: TradeItemType): number | null => {
     const rap = item.rap;
     return typeof rap === 'number' ? rap : null;
   };
   
-  const calculateTotal = (items: TradeItem[], getValue: (item: TradeItem) => number | null) => {
+  const calculateTotal = (items: TradeItemType[], getValue: (item: TradeItemType) => number | null) => {
     const total = items.reduce((sum, item) => {
       const value = getValue(item);
       return value !== null ? sum + value : sum;
@@ -118,13 +122,13 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
     return total;
   };
 
-  const calculateDifference = (offering: TradeItem[], requesting: TradeItem[], getValue: (item: TradeItem) => number | null) => {
+  const calculateDifference = (offering: TradeItemType[], requesting: TradeItemType[], getValue: (item: TradeItemType) => number | null) => {
     const offeringTotal = calculateTotal(offering, getValue);
     const requestingTotal = calculateTotal(requesting, getValue);
     return offeringTotal - requestingTotal;
   };
 
-  const calculatePercentage = (offering: TradeItem[], requesting: TradeItem[], getValue: (item: TradeItem) => number | null) => {
+  const calculatePercentage = (offering: TradeItemType[], requesting: TradeItemType[], getValue: (item: TradeItemType) => number | null) => {
     const offeringTotal = calculateTotal(offering, getValue);
     const requestingTotal = calculateTotal(requesting, getValue);
     if (requestingTotal === 0) return 0;
@@ -149,11 +153,15 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
       <div className="p-6 border-b border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img
-              src={trade.user.avatar}
-              alt={trade.user.displayName}
-              className="w-12 h-12 border border-zinc-800"
-            />
+            {isAvatarLoading ? (
+              <Skeleton className="w-12 h-12 border border-zinc-800" />
+            ) : (
+              <img
+                src={avatar || trade.user.avatar}
+                alt={trade.user.displayName}
+                className="w-12 h-12 border border-zinc-800"
+              />
+            )}
             <div>
               <h2 className="text-lg font-semibold text-zinc-100">{trade.user.displayName}</h2>
               <p className="text-sm text-zinc-400">@{trade.user.name}</p>
@@ -193,51 +201,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
           </h2>
           <div className="grid grid-cols-1 gap-4">
             {trade.items.requesting.map((item) => (
-              <div
-                key={`${trade.id}-requesting-${item.id}`}
-                className="flex items-center space-x-4 p-4 bg-zinc-900/50 border border-zinc-800 rounded-none"
-              >
-                <img
-                  src={item.thumbnail}
-                  alt={item.name}
-                  className="w-16 h-16 object-cover border border-zinc-800 rounded-none"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-zinc-100">
-                      {item.name}
-                    </h3>
-                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
-                      item.serial ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-800/50 text-zinc-500'
-                    }`}>
-                      <LimitedIcon className="w-3 h-3" />
-                      <span>{item.serial || 'N/A'}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-0 mt-2 flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="text-zinc-400">RAP:</span>
-                      <div className="flex items-center gap-1">
-                        <RobuxIcon className="h-4 w-4 text-zinc-100" />
-                        <span className="text-zinc-100">{getItemRap(item)?.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-zinc-400">Value:</span>
-                      <div className="flex items-center gap-1">
-                        <Image
-                          src="/icons/rolimons_logo_icon_blue.png"
-                          alt="Rolimons"
-                          width={16}
-                          height={16}
-                          className="object-contain"
-                        />
-                        <span className="text-zinc-100">{getItemValue(item)?.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <TradeItemComponent key={`${trade.id}-requesting-${item.id}`} item={item} />
             ))}
           </div>
           {/* Your Summary */}
@@ -250,51 +214,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
           </h2>
           <div className="grid grid-cols-1 gap-4">
             {trade.items.offering.map((item) => (
-              <div
-                key={`${trade.id}-offering-${item.id}`}
-                className="flex items-center space-x-4 p-4 bg-zinc-900/50 border border-zinc-800 rounded-none"
-              >
-                <img
-                  src={item.thumbnail}
-                  alt={item.name}
-                  className="w-16 h-16 object-cover border border-zinc-800 rounded-none"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium text-zinc-100">
-                      {item.name}
-                    </h3>
-                    <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${
-                      item.serial ? 'bg-zinc-800 text-zinc-100' : 'bg-zinc-800/50 text-zinc-500'
-                    }`}>
-                      <LimitedIcon className="w-3 h-3" />
-                      <span>{item.serial || 'N/A'}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4 mt-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-zinc-400">RAP:</span>
-                      <div className="flex items-center gap-1">
-                        <RobuxIcon className="h-4 w-4 text-zinc-100" />
-                        <span className="text-zinc-100">{getItemRap(item)?.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-zinc-400">Value:</span>
-                      <div className="flex items-center gap-1">
-                        <Image
-                          src="/icons/rolimons_logo_icon_blue.png"
-                          alt="Rolimons"
-                          width={16}
-                          height={16}
-                          className="object-contain"
-                        />
-                        <span className="text-zinc-100">{getItemValue(item)?.toLocaleString()}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <TradeItemComponent key={`${trade.id}-offering-${item.id}`} item={item} />
             ))}
           </div>
         </div>

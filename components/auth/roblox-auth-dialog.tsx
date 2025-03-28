@@ -7,11 +7,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter
 } from "@/components/ui/dialog";
-import { Shield, Lock, Star, RefreshCw } from "lucide-react";
+import { Shield, Lock, Star, RefreshCw, AlertCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useRobloxAuth } from "@/app/hooks/use-roblox-auth";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface RobloxAuthDialogProps {
   open: boolean;
@@ -22,6 +24,7 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
   const { login, isAuthenticated } = useRobloxAuth();
   const [cookie, setCookie] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Close dialog if user becomes authenticated
   useEffect(() => {
@@ -30,8 +33,16 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
     }
   }, [isAuthenticated, open, onOpenChange]);
 
+  // Validate cookie format
+  const validateCookie = useCallback((value: string): boolean => {
+    // Basic validation - should start with warning text and have reasonable length
+    const warningPrefix = "_|WARNING:-DO-NOT-SHARE-THIS";
+    return value.includes(warningPrefix) && value.length > 100;
+  }, []);
+
   const handleCookieChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCookie(e.target.value);
+    setError(null); // Clear any previous errors
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -39,10 +50,17 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
       return;
     }
 
+    // Validate cookie format first
+    if (!validateCookie(cookie)) {
+      setError("The cookie format appears to be invalid. Please make sure you're copying the entire .ROBLOSECURITY cookie value.");
+      return;
+    }
+
     setIsSubmitting(true);
+    setError(null);
 
     try {
-      console.log("Attempting login...");
+      console.log("Attempting login with cookie");
       const success = await login(cookie);
       console.log("Login result:", success);
       
@@ -51,13 +69,17 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
         setTimeout(() => {
           onOpenChange(false);
         }, 500);
+      } else {
+        // This should not normally happen as errors are caught in the catch block
+        setError("Authentication failed. Please check your cookie and try again.");
       }
     } catch (error) {
       console.error("Login error:", error);
+      setError(error instanceof Error ? error.message : "Authentication failed");
     } finally {
       setIsSubmitting(false);
     }
-  }, [cookie, login, onOpenChange, isSubmitting]);
+  }, [cookie, login, onOpenChange, isSubmitting, validateCookie]);
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (!isSubmitting) {
@@ -66,6 +88,7 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
       // Reset state when dialog closes
       if (!open) {
         setCookie("");
+        setError(null);
       }
     }
   }, [isSubmitting, onOpenChange]);
@@ -122,6 +145,13 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
             <div className="h-[1px] w-full bg-zinc-800" />
           </div>
 
+          {error && (
+            <Alert variant="destructive" className="bg-red-950/20 border-red-900/50 text-red-200">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex flex-col gap-2">
             <Textarea
               placeholder="Paste your .ROBLOSECURITY cookie here"
@@ -154,6 +184,10 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
             </div>
           </div>
         </div>
+
+        <DialogFooter className="pt-2 border-t border-zinc-800 text-xs text-zinc-500">
+          <span>Ensure you're using the correct cookie format starting with "_|WARNING:-DO-NOT-SHARE-THIS"</span>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

@@ -5,12 +5,16 @@ import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAvatarThumbnail } from '@/app/hooks/use-avatar-thumbnail';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TradeCardProps {
   trade: Trade;
 }
 
 export function TradeCard({ trade }: TradeCardProps) {
+  const { avatar, isLoading } = useAvatarThumbnail(trade.user.id, trade.user.avatar);
+  
   const statusColors = {
     Inbound: 'bg-background text-zinc-100',
     Outbound: 'bg-background text-zinc-100',
@@ -22,11 +26,15 @@ export function TradeCard({ trade }: TradeCardProps) {
     <div className="p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <img
-            src={trade.user.avatar || `https://www.roblox.com/headshot-thumbnail/image?userId=${trade.user.id}&width=50&height=50`}
-            alt={trade.user.displayName}
-            className="w-8 h-8 border border-zinc-800"
-          />
+          {isLoading ? (
+            <Skeleton className="w-8 h-8 border border-zinc-800" />
+          ) : (
+            <img
+              src={avatar || `https://tr.rbxcdn.com/30DAY-AvatarHeadshot-placeholder/150/150/AvatarHeadshot/Png/noFilter`}
+              alt={trade.user.displayName}
+              className="w-8 h-8 border border-zinc-800"
+            />
+          )}
           <div>
             <h3 className="font-medium text-zinc-100">{trade.user.displayName}</h3>
             <p className="text-xs text-zinc-400">@{trade.user.name}</p>

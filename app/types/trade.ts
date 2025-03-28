@@ -2,6 +2,7 @@ export interface TradeItem {
   id: number;
   name: string;
   assetType: string;
+  assetTypeId?: number;
   thumbnail: string;
   rap: number | string | null;
   value: number | string | null;

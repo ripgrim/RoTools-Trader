@@ -28,8 +28,8 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <TokenProvider>
-          <RobloxAuthProvider>
+        <RobloxAuthProvider>
+          <TokenProvider>
             <ThemeProvider
               attribute="class"
               defaultTheme="dark"
@@ -42,8 +42,8 @@ export default function RootLayout({
                 <Toaster />
               </div>
             </ThemeProvider>
-          </RobloxAuthProvider>
-        </TokenProvider>
+          </TokenProvider>
+        </RobloxAuthProvider>
       </body>
     </html>
   );
