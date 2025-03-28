@@ -148,6 +148,26 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
     return `Expires in ${formatDistanceToNow(expirationDate)}`;
   };
 
+  // Add a function to get the appropriate heading based on trade status
+  const getItemHeadings = () => {
+    // For completed trades, use past tense
+    if (trade.status === 'Completed' || trade.status === 'Declined') {
+      return {
+        requesting: "Items you gave",
+        offering: "Items you received"
+      };
+    }
+    
+    // For pending trades (inbound/outbound), use future tense
+    return {
+      requesting: "Items you will give",
+      offering: "Items you will receive"
+    };
+  };
+
+  // Get the appropriate headings
+  const headings = getItemHeadings();
+
   const content = (
     <div className="h-full bg-background">
       <div className="p-6 border-b border-zinc-800">
@@ -194,10 +214,10 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
       </div>
 
       <div ref={tradeContentRef} className="p-6 space-y-8 bg-background">
-        {/* Items you will give */}
+        {/* Items you will give/gave */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold text-zinc-100 mb-4">
-            Items you will give
+            {headings.requesting}
           </h2>
           <div className="grid grid-cols-1 gap-4">
             {trade.items.requesting.map((item) => (
@@ -207,10 +227,10 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
           {/* Your Summary */}
         </div>
 
-        {/* Items you will receive */}
+        {/* Items you will receive/received */}
         <div>
           <h2 className="text-lg font-semibold text-zinc-100 mb-4">
-            Items you will receive
+            {headings.offering}
           </h2>
           <div className="grid grid-cols-1 gap-4">
             {trade.items.offering.map((item) => (
@@ -224,7 +244,11 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
           <h3 className="text-lg font-semibold text-zinc-100 mb-4">Trade Summary</h3>
           <div className="grid grid-cols-2 gap-8">
             <div>
-              <h4 className="text-zinc-400 mb-2">You will receive:</h4>
+              <h4 className="text-zinc-400 mb-2">
+                {trade.status === 'Completed' || trade.status === 'Declined' 
+                  ? "You received:" 
+                  : "You will receive:"}
+              </h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-zinc-400">Total RAP:</span>
@@ -249,7 +273,11 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
               </div>
             </div>
             <div>
-              <h4 className="text-zinc-400 mb-2">You will give:</h4>
+              <h4 className="text-zinc-400 mb-2">
+                {trade.status === 'Completed' || trade.status === 'Declined' 
+                  ? "You gave:" 
+                  : "You will give:"}
+              </h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="text-zinc-400">Total RAP:</span>

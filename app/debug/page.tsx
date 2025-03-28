@@ -62,11 +62,10 @@ export default function DebugPage() {
     
     setIsUserDataLoading(true);
     try {
-      // Use our own API proxy instead of direct Roblox API call
-      const response = await fetch("/api/roblox/user", {
+      const response = await fetch("https://users.roblox.com/v1/users/authenticated", {
         method: 'GET',
         headers: {
-          'x-roblox-cookie': cookie
+          'Cookie': `.ROBLOSECURITY=${cookie}`
         }
       });
       

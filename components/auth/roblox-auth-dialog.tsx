@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useRobloxAuth } from "@/app/hooks/use-roblox-auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { attemptRobloxLogin } from '@/app/utils/auth-utils';
 
 interface RobloxAuthDialogProps {
   open: boolean;
@@ -26,19 +27,18 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Debug logging for dialog state
+  useEffect(() => {
+    console.log("Auth dialog state:", { open, isAuthenticated });
+  }, [open, isAuthenticated]);
+  
   // Close dialog if user becomes authenticated
   useEffect(() => {
     if (isAuthenticated && open) {
+      console.log("User is authenticated, closing dialog");
       onOpenChange(false);
     }
   }, [isAuthenticated, open, onOpenChange]);
-
-  // Validate cookie format
-  const validateCookie = useCallback((value: string): boolean => {
-    // Basic validation - should start with warning text and have reasonable length
-    const warningPrefix = "_|WARNING:-DO-NOT-SHARE-THIS";
-    return value.includes(warningPrefix) && value.length > 100;
-  }, []);
 
   const handleCookieChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCookie(e.target.value);
@@ -49,37 +49,29 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
     if (!cookie.trim() || isSubmitting) {
       return;
     }
-
-    // Validate cookie format first
-    if (!validateCookie(cookie)) {
-      setError("The cookie format appears to be invalid. Please make sure you're copying the entire .ROBLOSECURITY cookie value.");
-      return;
-    }
-
+    
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      console.log("Attempting login with cookie");
-      const success = await login(cookie);
-      console.log("Login result:", success);
-      
-      if (success) {
+    // Use the shared login utility
+    await attemptRobloxLogin(
+      cookie,
+      login,
+      // Success callback
+      () => {
+        console.log("Login successful via dialog, will close shortly");
         // Close the dialog after a brief delay
-        setTimeout(() => {
-          onOpenChange(false);
-        }, 500);
-      } else {
-        // This should not normally happen as errors are caught in the catch block
-        setError("Authentication failed. Please check your cookie and try again.");
+        setTimeout(() => onOpenChange(false), 500);
+      },
+      // Error callback
+      (errorMessage) => {
+        console.error("Login failed in dialog:", errorMessage);
+        setError(errorMessage);
       }
-    } catch (error) {
-      console.error("Login error:", error);
-      setError(error instanceof Error ? error.message : "Authentication failed");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [cookie, login, onOpenChange, isSubmitting, validateCookie]);
+    );
+    
+    setIsSubmitting(false);
+  }, [cookie, login, onOpenChange, isSubmitting]);
 
   const handleOpenChange = useCallback((open: boolean) => {
     if (!isSubmitting) {

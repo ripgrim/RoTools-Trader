@@ -7,6 +7,10 @@ import Cookies from 'js-cookie';
 const ROBLOX_COOKIE_KEY = 'roblox-cookie';
 // Name of the cookie used for session tracking (used by middleware)
 const SESSION_COOKIE_NAME = 'roblox-auth-session';
+// Cookie check interval in milliseconds (20 minutes instead of 10)
+const AUTH_CHECK_INTERVAL = 20 * 60 * 1000;
+// Initial check delay (5 seconds)
+const INITIAL_CHECK_DELAY = 5000;
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -35,13 +39,41 @@ export function useRobloxAuth() {
         Cookies.set(SESSION_COOKIE_NAME, 'authenticated', { 
           expires: 30, 
           sameSite: 'Strict',
-          secure: process.env.NODE_ENV === 'production'
+          secure: process.env.NODE_ENV === 'production',
+          path: '/' // Ensure cookie is available across all paths
         });
         console.log("Session cookie set");
+        
+        // Double-check to make sure cookie was set
+        const cookieExists = Cookies.get(SESSION_COOKIE_NAME);
+        if (!cookieExists) {
+          console.warn("Failed to set session cookie - will retry");
+          // Try again with a slight delay
+          setTimeout(() => {
+            Cookies.set(SESSION_COOKIE_NAME, 'authenticated', { 
+              expires: 30, 
+              sameSite: 'Strict',
+              secure: process.env.NODE_ENV === 'production',
+              path: '/'
+            });
+            console.log("Session cookie set (retry)");
+          }, 100);
+        }
       } else {
         // Remove the session cookie
-        Cookies.remove(SESSION_COOKIE_NAME);
+        Cookies.remove(SESSION_COOKIE_NAME, { path: '/' });
         console.log("Session cookie removed");
+        
+        // Double-check to make sure cookie was removed
+        const cookieExists = Cookies.get(SESSION_COOKIE_NAME);
+        if (cookieExists) {
+          console.warn("Failed to remove session cookie - will retry");
+          // Try again with a slight delay
+          setTimeout(() => {
+            Cookies.remove(SESSION_COOKIE_NAME, { path: '/' });
+            console.log("Session cookie removed (retry)");
+          }, 100);
+        }
       }
     } catch (error) {
       console.error("Error updating session cookie:", error);
@@ -58,23 +90,33 @@ export function useRobloxAuth() {
     let isMounted = true;
     hasInitialized.current = true;
     
-    const initAuth = async () => {
+    const initAuth = () => {
       try {
         console.log("Initializing auth state...");
-        const storedCookie = await getSecureValue(ROBLOX_COOKIE_KEY);
-        const isAuth = !!storedCookie;
+        // Get cookie from secure storage
+        const storedCookie = getSecureValue(ROBLOX_COOKIE_KEY);
+        console.log("Retrieved cookie from storage:", { cookieExists: !!storedCookie });
         
+        // Determine authentication status
+        const isAuth = !!storedCookie;
         console.log("Auth state initialized:", { isAuthenticated: isAuth, cookiePresent: !!storedCookie });
         
-        // Update the session cookie
+        // Update the session cookie (important to do before setting state)
         updateSessionCookie(isAuth);
         
+        // Only update state if component is still mounted
         if (isMounted) {
+          // Set auth state in a single update to prevent inconsistency
           setAuthState({
             isAuthenticated: isAuth,
             isLoading: false,
             cookie: storedCookie,
           });
+          
+          // Log authentication success for debugging
+          if (isAuth) {
+            console.log("Authentication successful from stored cookie");
+          }
         }
       } catch (error) {
         console.error('Failed to initialize auth state:', error);
@@ -92,9 +134,12 @@ export function useRobloxAuth() {
       }
     };
 
+    // Initialize auth state
     initAuth();
     
+    // Cleanup function
     return () => {
+      console.log("Auth initialization cleanup - component unmounting");
       isMounted = false;
     };
   }, [getSecureValue, updateSessionCookie]);
@@ -144,7 +189,7 @@ export function useRobloxAuth() {
       
       console.log("Cookie validated, storing...");
       // Store the refreshed cookie
-      await setSecureValue(ROBLOX_COOKIE_KEY, refreshedCookie);
+      setSecureValue(ROBLOX_COOKIE_KEY, refreshedCookie);
       
       // Update session cookie
       console.log("Updating session cookie...");
@@ -193,7 +238,7 @@ export function useRobloxAuth() {
   const logout = useCallback(async () => {
     try {
       console.log("Logout process started");
-      await setSecureValue(ROBLOX_COOKIE_KEY, '');
+      setSecureValue(ROBLOX_COOKIE_KEY, '');
       
       // Remove session cookie
       console.log("Removing session cookie...");
@@ -224,6 +269,194 @@ export function useRobloxAuth() {
       });
     }
   }, [setSecureValue, toast, updateSessionCookie]);
+
+  // Function to periodically check if the auth is still valid
+  useEffect(() => {
+    // Don't try to validate while still loading
+    if (authState.isLoading) {
+      return;
+    }
+    
+    let isSubscribed = true;
+    
+    console.log("Setting up auth check with status:", { 
+      isAuthenticated: authState.isAuthenticated, 
+      hasValidCookie: !!authState.cookie,
+      isLoading: authState.isLoading
+    });
+    
+    // Only run timers once authentication is established and not loading
+    if (authState.isAuthenticated && authState.cookie) {
+      // Add a unique ID for this effect instance to debug
+      const instanceId = Math.random().toString(36).substring(2, 10);
+      console.log(`Auth check instance ${instanceId} initialized`);
+      
+      // Store the current cookie value to avoid capturing changes via closure
+      const cookieToCheck = authState.cookie;
+      
+      // Initial check after a delay
+      const initialCheckId = setTimeout(() => {
+        if (!isSubscribed) {
+          console.log(`Auth check instance ${instanceId} initial check canceled`);
+          return;
+        }
+        
+        // Only run check if we still have auth context
+        try {
+          console.log(`Auth check instance ${instanceId} running initial check`);
+          validateAndRefreshAuth(cookieToCheck);
+        } catch (err) {
+          console.error(`Auth check instance ${instanceId} initial check error:`, err);
+        }
+      }, INITIAL_CHECK_DELAY);
+      
+      // Set up periodic check
+      const intervalId = setInterval(() => {
+        if (!isSubscribed) {
+          console.log(`Auth check instance ${instanceId} periodic check canceled`);
+          return;
+        }
+        
+        // Only run check if we still have auth context
+        try {
+          console.log(`Auth check instance ${instanceId} running periodic check`);
+          validateAndRefreshAuth(cookieToCheck);
+        } catch (err) {
+          console.error(`Auth check instance ${instanceId} periodic check error:`, err);
+        }
+      }, AUTH_CHECK_INTERVAL);
+      
+      console.log(`Auth check instance ${instanceId} timers set up:`, { 
+        initialDelay: INITIAL_CHECK_DELAY, 
+        interval: AUTH_CHECK_INTERVAL,
+        cookieLength: cookieToCheck.length
+      });
+      
+      return () => {
+        console.log(`Auth check instance ${instanceId} cleaning up (auth valid: ${authState.isAuthenticated})`);
+        isSubscribed = false;
+        clearTimeout(initialCheckId);
+        clearInterval(intervalId);
+      };
+    }
+    
+    return () => {
+      console.log("Auth check canceled (not authenticated or loading)");
+      isSubscribed = false;
+    };
+  }, [authState.isAuthenticated, authState.isLoading]);
+
+  // Helper to validate and refresh auth if needed
+  const validateAndRefreshAuth = async (currentCookie: string) => {
+    // Create a reference to check if the operation was canceled
+    let isCanceled = false;
+    
+    // Set up a timeout to abort long-running operations on navigation
+    const timeoutId = setTimeout(() => {
+      isCanceled = true;
+      console.log("Auth validation timed out after 10 seconds");
+    }, 10000);
+    
+    try {
+      console.log("Validating auth status...");
+      
+      // Try to refresh the cookie which also validates it
+      let isValid = false;
+      let refreshedCookie = null;
+      
+      try {
+        refreshedCookie = await refreshCookie(currentCookie);
+        isValid = !!refreshedCookie;
+      } catch (refreshError) {
+        console.error("Error refreshing cookie during validation:", refreshError);
+        isValid = false;
+      }
+      
+      // Stop if the operation was canceled (e.g., during navigation)
+      if (isCanceled) {
+        console.log("Auth validation canceled, aborting");
+        return;
+      }
+      
+      if (isValid && refreshedCookie) {
+        // Compare important parts of the cookie to avoid unnecessary updates
+        const refreshedPrefix = refreshedCookie.substring(0, 50);
+        const currentPrefix = currentCookie.substring(0, 50);
+        
+        if (refreshedPrefix !== currentPrefix) {
+          console.log("Auth still valid - updating with new refreshed cookie");
+          
+          // Store the refreshed cookie
+          setSecureValue(ROBLOX_COOKIE_KEY, refreshedCookie);
+          
+          // Update session cookie
+          try {
+            Cookies.set(SESSION_COOKIE_NAME, 'authenticated', { 
+              expires: 30, 
+              sameSite: 'Strict',
+              secure: process.env.NODE_ENV === 'production'
+            });
+            console.log("Session cookie refreshed");
+          } catch (cookieError) {
+            console.error("Error updating session cookie:", cookieError);
+          }
+          
+          // Stop if the operation was canceled (e.g., during navigation)
+          if (isCanceled) {
+            console.log("Auth state update canceled, aborting");
+            return;
+          }
+          
+          // Update auth state in a single atomic operation
+          setAuthState(prevState => ({
+            ...prevState,
+            isAuthenticated: true,  // Ensure we stay authenticated
+            cookie: refreshedCookie,
+          }));
+        } else {
+          console.log("Cookie unchanged after refresh, skipping update");
+        }
+      } else {
+        console.log("Auth validation failed - logging out");
+        
+        // Clear cookie storage
+        setSecureValue(ROBLOX_COOKIE_KEY, '');
+        
+        // Clear session cookie
+        try {
+          Cookies.remove(SESSION_COOKIE_NAME);
+          console.log("Session cookie removed due to validation failure");
+        } catch (cookieError) {
+          console.error("Error removing session cookie:", cookieError);
+        }
+        
+        // Stop if the operation was canceled (e.g., during navigation)
+        if (isCanceled) {
+          console.log("Auth logout canceled, aborting");
+          return;
+        }
+        
+        // Update state in a single atomic operation
+        setAuthState({
+          isAuthenticated: false,
+          isLoading: false,
+          cookie: null,
+        });
+        
+        // Show notification if needed
+        toast({
+          title: 'Session expired',
+          description: 'Your authentication has expired. Please log in again.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error("Error checking auth status:", error);
+    } finally {
+      // Always clear the timeout to prevent memory leaks
+      clearTimeout(timeoutId);
+    }
+  };
 
   return {
     ...authState,

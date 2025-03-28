@@ -240,7 +240,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                     </div>
                   ` : ''}
                 </div>
-              </div>
+    </div>
             `;
             receivingItemsContainer.appendChild(itemElement);
           });
@@ -372,7 +372,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
   };
 
   return (
-    <>      
+    <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-[650px] p-6">
           {isGenerating ? (
@@ -426,7 +426,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                   />
                 ) : (
                   <div className="styled-component-display" ref={containerRef}>
-                    <TradeScreenshot trade={trade} />
+                  <TradeScreenshot trade={trade} />
                   </div>
                 )}
               </div>
@@ -448,7 +448,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                   {copySuccess ? (
                     <Check className="w-4 h-4 mr-2" />
                   ) : (
-                    <Copy className="w-4 h-4 mr-2" />
+                  <Copy className="w-4 h-4 mr-2" />
                   )}
                   {copySuccess ? 'Copied' : 'Copy'}
                 </Button>

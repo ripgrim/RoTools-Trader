@@ -7,13 +7,25 @@ import { ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAvatarThumbnail } from '@/app/hooks/use-avatar-thumbnail';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect } from 'react';
+
+// Default avatar SVG as a base64 data URL for reliable fallback
+const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%232A2A2A'/%3E%3Cpath d='M75,40 C87,40 97,50 97,62 C97,74 87,84 75,84 C63,84 53,74 53,62 C53,50 63,40 75,40 Z M75,94 C98,94 116,105 116,120 L116,125 L34,125 L34,120 C34,105 52,94 75,94 Z' fill='%23666666'/%3E%3C/svg%3E";
 
 interface TradeCardProps {
   trade: Trade;
 }
 
 export function TradeCard({ trade }: TradeCardProps) {
-  const { avatar, isLoading } = useAvatarThumbnail(trade.user.id, trade.user.avatar);
+  const { avatar, isLoading, error } = useAvatarThumbnail(trade.user.id, trade.user.avatar);
+  
+  useEffect(() => {
+    console.log("TradeCard rendering for:", {
+      userId: trade.user.id,
+      initialAvatar: trade.user.avatar,
+      hookResult: { avatar, isLoading, error }
+    });
+  }, [trade.user.id, trade.user.avatar, avatar, isLoading, error]);
   
   const statusColors = {
     Inbound: 'bg-background text-zinc-100',
@@ -30,9 +42,14 @@ export function TradeCard({ trade }: TradeCardProps) {
             <Skeleton className="w-8 h-8 border border-zinc-800" />
           ) : (
             <img
-              src={avatar || `https://tr.rbxcdn.com/30DAY-AvatarHeadshot-placeholder/150/150/AvatarHeadshot/Png/noFilter`}
+              src={avatar || DEFAULT_AVATAR}
               alt={trade.user.displayName}
               className="w-8 h-8 border border-zinc-800"
+              onError={(e) => {
+                console.error("Image failed to load:", e);
+                // Use a reliable fallback that won't trigger another error
+                e.currentTarget.src = DEFAULT_AVATAR;
+              }}
             />
           )}
           <div>
