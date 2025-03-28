@@ -165,10 +165,6 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
           </div>
         </div>
       </div>
-
-      <div className="text-xs text-zinc-500 text-center">
-        <span>Ensure you're using the correct cookie format starting with "_|WARNING:-DO-NOT-SHARE-THIS"</span>
-      </div>
     </div>
   );
 
@@ -177,15 +173,15 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
       <Drawer.Root open={open} onOpenChange={handleOpenChange}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40" />
-          <Drawer.Content className="bg-zinc-950 flex flex-col rounded-t-[10px] h-[96vh] mt-24 fixed bottom-0 left-0 right-0">
-            <div className="px-4 sm:px-6 py-4 bg-zinc-950 rounded-t-[10px] flex-1 overflow-auto">
-              <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-800 mb-8" />
+          <Drawer.Content className="bg-zinc-950 flex flex-col rounded-t-[10px] h-[85vh] mt-[15vh] fixed bottom-0 left-0 right-0">
+            <div className="px-4 py-4 bg-zinc-950 rounded-t-[10px] flex-1 overflow-auto">
+              <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-800 mb-4" />
               
               <div className="max-w-md mx-auto">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <Shield className="w-5 h-5 text-zinc-400" />
-                    <h2 className="text-xl font-bold text-zinc-100">Roblox Authentication</h2>
+                    <h2 className="text-lg font-bold text-zinc-100">Roblox Authentication</h2>
                   </div>
                   <Button
                     variant="ghost"
@@ -197,11 +193,80 @@ export function RobloxAuthDialog({ open, onOpenChange }: RobloxAuthDialogProps) 
                   </Button>
                 </div>
                 
-                <p className="text-zinc-400 mb-6">
+                <p className="text-zinc-400 mb-4 text-sm">
                   Please add your Roblox .ROBLOSECURITY cookie to authenticate.
                 </p>
 
-                {content}
+                <div className="space-y-4">
+                  {/* Instructions - More compact for mobile */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-zinc-100 text-sm">How to get your cookie:</h3>
+                    <ol className="space-y-2 text-sm text-zinc-400">
+                      <li className="flex gap-2"><span className="text-zinc-500">1.</span>Visit <span className="text-zinc-100">Roblox.com</span> and login if necessary</li>
+                      <li className="flex gap-2"><span className="text-zinc-500">2.</span>Open Developer Tools (<span className="text-zinc-100">F12</span> or <span className="text-zinc-100">Cmd+Opt+I</span>)</li>
+                      <li className="flex gap-2"><span className="text-zinc-500">3.</span>Navigate to <span className="text-zinc-100">Application → Cookies → https://www.roblox.com</span></li>
+                      <li className="flex gap-2"><span className="text-zinc-500">4.</span>Find and copy the value of <span className="text-zinc-100">.ROBLOSECURITY</span></li>
+                    </ol>
+                    <div className="flex items-center gap-2">
+                      <div className="h-[1px] w-full bg-zinc-800" />
+                      <span className="text-zinc-400 text-xs">or</span>
+                      <div className="h-[1px] w-full bg-zinc-800" />
+                    </div>
+
+                    <ol className="space-y-2 text-sm text-zinc-400">
+                      <li className="flex gap-2">
+                        <span className="text-zinc-500">1.</span>
+                        Install the <a href="https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm" target="_blank" rel="noopener noreferrer" className="text-zinc-100 flex flex-row items-center gap-1">
+                          Cookie Editor <span className="text-zinc-400 text-xs bg-zinc-900 px-1 rounded-none flex flex-row items-center gap-1">4.4 <Star className="w-3 h-3 fill-zinc-400 stroke-zinc-400" /></span>
+                        </a>
+                      </li>
+                      <li className="flex gap-2"><span className="text-zinc-500">2.</span>Click the extension icon on Roblox.com</li>
+                      <li className="flex gap-2"><span className="text-zinc-500">3.</span>Copy the value of <span className="text-zinc-100">.ROBLOSECURITY</span></li>
+                    </ol>
+                  </div>
+
+                  {error && (
+                    <Alert variant="destructive" className="bg-red-950/20 border-red-900/50 text-red-200 py-2">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  <div className="flex flex-col gap-2">
+                    <Textarea
+                      placeholder="Paste your .ROBLOSECURITY cookie here"
+                      className="w-full min-h-[60px] bg-zinc-900/50 border-zinc-800 focus:ring-offset-zinc-950 text-sm"
+                      value={cookie}
+                      onChange={handleCookieChange}
+                      disabled={isSubmitting}
+                    />
+                    <Button
+                      variant="default"
+                      className="w-full"
+                      onClick={handleSubmit}
+                      disabled={isSubmitting || !cookie.trim()}
+                    >
+                      {buttonContent}
+                    </Button>
+                  </div>
+
+                  {/* Security Notice - More compact for mobile */}
+                  <div className="p-3 bg-zinc-900/50 rounded-none border border-zinc-800/50">
+                    <div className="flex items-start gap-2">
+                      <Lock className="w-4 h-4 text-zinc-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="font-medium text-zinc-100 text-sm">Your Security Matters</h4>
+                        <p className="text-xs text-zinc-400">
+                          Your cookie is stored locally and used only to authenticate with Roblox. Never shared with third parties.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-zinc-500 text-center">
+                    <span>Cookie format: "_|WARNING:-DO-NOT-SHARE-THIS..."</span>
+                  </div>
+                </div>
               </div>
             </div>
           </Drawer.Content>
