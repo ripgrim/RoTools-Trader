@@ -40,9 +40,9 @@ function EmptyTradeDetail({ type }: { type: string }) {
   return (
     <div className="h-full flex flex-col items-center justify-center p-8 text-center">
       <div className="mb-6 relative w-40 h-40 flex items-center justify-center">
-        <img 
-          src="https://images.rbxcdn.com/9281912c23312bc0d08ab750afa588cc.png" 
-          alt="Roblox 404 Character" 
+        <img
+          src="https://images.rbxcdn.com/9281912c23312bc0d08ab750afa588cc.png"
+          alt="Roblox 404 Character"
           className="w-full h-full object-contain"
         />
         <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
@@ -66,28 +66,28 @@ export function Trades({ trades }: { trades?: Trade[] }) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState('inbound');
-  
+
   // Fetch detailed trade information for the selected trade
   const { trade: detailedTrade, isLoading: isTradeLoading, error: tradeError } = useTradeDetails(selectedTradeId);
-  
+
   // We'll use either the detailed trade (if loaded) or the original list item
   const [displayTrade, setDisplayTrade] = useState<Trade | null>(null);
 
   // Get trades hooks for pagination
-  const { 
-    displayedTrades, 
-    loadMoreTrades, 
-    hasMoreTrades, 
+  const {
+    displayedTrades,
+    loadMoreTrades,
+    hasMoreTrades,
     isLoadingMore,
     inboundCount,
     isCountLoading,
     refreshInboundCount,
     refetch: refreshAllTrades
   } = useTrades();
-  
+
   // State for refresh button loading
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // Handle refreshing all trades
   const handleRefreshTrades = async () => {
     setIsRefreshing(true);
@@ -97,10 +97,10 @@ export function Trades({ trades }: { trades?: Trade[] }) {
       setIsRefreshing(false);
     }
   };
-  
+
   // Register the refresh function with the global TradeActions context
   const { registerRefreshFunction } = useTradeActions();
-  
+
   // Register the refresh function
   useEffect(() => {
     registerRefreshFunction(refreshInboundCount);
@@ -111,31 +111,31 @@ export function Trades({ trades }: { trades?: Trade[] }) {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     // Initial check
     checkMobile();
-    
+
     // Add resize listener
     window.addEventListener('resize', checkMobile);
-    
+
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   // Auto-select first trade on desktop or when tab changes
   useEffect(() => {
     const currentTabTrades = getCurrentTabTrades();
-    
+
     if (currentTabTrades.length > 0) {
       const firstTrade = currentTabTrades[0];
       console.log(`Auto-selecting first ${activeTab} trade:`, {
         id: firstTrade.id,
         user: firstTrade.user.name
       });
-      
+
       // Select the first trade of the current tab
       setSelectedTradeId(firstTrade.id);
       setDisplayTrade(firstTrade);
-      
+
       // On desktop, no need to show drawer as details are always visible
       if (!isMobile) {
         setIsDrawerOpen(false);
@@ -171,7 +171,7 @@ export function Trades({ trades }: { trades?: Trade[] }) {
       user: trade.user.name,
       status: trade.status
     });
-    
+
     // First, check if this is a different trade than currently selected
     if (selectedTradeId !== trade.id) {
       // If switching to a different trade, clear current display first
@@ -186,7 +186,7 @@ export function Trades({ trades }: { trades?: Trade[] }) {
         setDisplayTrade(cleanTrade);
       }, 0);
     }
-    
+
     setIsDrawerOpen(true);
   };
 
@@ -199,12 +199,12 @@ export function Trades({ trades }: { trades?: Trade[] }) {
   const handleTabChange = (value: string) => {
     console.log(`Switching to tab: ${value}`);
     setActiveTab(value);
-    
+
     // Refresh inbound count when switching tabs
     if (value === 'inbound') {
       refreshInboundCount();
     }
-    
+
     // Don't clear selection here, let the effect handle it
   };
 
@@ -239,22 +239,22 @@ export function Trades({ trades }: { trades?: Trade[] }) {
   // Render the trade details or a loading state
   const renderTradeDetail = () => {
     const currentTabTrades = getCurrentTabTrades();
-    
+
     // Check if there are no trades in the current tab
     if (currentTabTrades.length === 0) {
       return <EmptyTradeDetail type={activeTab} />;
     }
-    
+
     // No selected trade
     if (!displayTrade) return null;
-    
+
     // Check if we're loading a new trade (using ID comparison)
     const isLoadingNewTrade = isTradeLoading && (!detailedTrade || detailedTrade.id !== displayTrade.id);
-    
+
     if (isLoadingNewTrade) {
       // Show skeleton when loading a new trade's details
       return (
-        <TradeSkeleton 
+        <TradeSkeleton
           isOpen={!isMobile || isDrawerOpen}
           onClose={handleDrawerClose}
           requestingCount={displayTrade.items.requesting.length}
@@ -262,11 +262,11 @@ export function Trades({ trades }: { trades?: Trade[] }) {
         />
       );
     }
-    
+
     // If we have the detailed trade data or are falling back to list data
     return (
-      <TradeDetail 
-        trade={displayTrade} 
+      <TradeDetail
+        trade={displayTrade}
         isOpen={!isMobile || isDrawerOpen}
         onClose={handleDrawerClose}
       />
@@ -299,9 +299,9 @@ export function Trades({ trades }: { trades?: Trade[] }) {
                 Completed
               </TabsTrigger>
             </div>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               size="sm"
               className="h-8 border-zinc-800 text-zinc-400"
               onClick={handleRefreshTrades}
@@ -313,13 +313,13 @@ export function Trades({ trades }: { trades?: Trade[] }) {
           </TabsList>
           <TabsContent value="inbound" className="flex-1 px-6 py-4">
             <div className="space-y-4">
-              <TradeList 
+              <TradeList
                 trades={displayedTrades.inbound}
                 selectedTrade={displayTrade}
                 onSelectTrade={handleTradeSelect}
                 type="inbound"
               />
-              
+
               {canLoadMore() && (
                 <div className="flex justify-center pt-4">
                   <Button
@@ -336,13 +336,13 @@ export function Trades({ trades }: { trades?: Trade[] }) {
           </TabsContent>
           <TabsContent value="outbound" className="flex-1 px-6 py-4">
             <div className="space-y-4">
-              <TradeList 
+              <TradeList
                 trades={displayedTrades.outbound}
                 selectedTrade={displayTrade}
                 onSelectTrade={handleTradeSelect}
                 type="outbound"
               />
-              
+
               {canLoadMore() && (
                 <div className="flex justify-center pt-4">
                   <Button
@@ -359,13 +359,13 @@ export function Trades({ trades }: { trades?: Trade[] }) {
           </TabsContent>
           <TabsContent value="completed" className="flex-1 px-6 py-4">
             <div className="space-y-4">
-              <TradeList 
+              <TradeList
                 trades={displayedTrades.completed}
                 selectedTrade={displayTrade}
                 onSelectTrade={handleTradeSelect}
                 type="completed"
               />
-              
+
               {canLoadMore() && (
                 <div className="flex justify-center pt-4">
                   <Button
@@ -388,6 +388,18 @@ export function Trades({ trades }: { trades?: Trade[] }) {
       {/* Mobile Trade Detail */}
       {displayTrade && (
         <div className="md:hidden">
+          {/* Mobile refresh button */}
+          <div className="fixed bottom-6 right-6 z-50">
+            <Button
+              variant="default"
+              size="icon"
+              className="h-12 w-12 rounded-full shadow-lg bg-primary text-primary-foreground"
+              onClick={handleRefreshTrades}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-5 w-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
           {renderTradeDetail()}
         </div>
       )}
