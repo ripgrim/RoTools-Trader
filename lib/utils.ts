@@ -2,6 +2,7 @@ import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { Trade, TradeItem } from "@/app/types/trade";
 import { ScreenshotTrade } from "@/components/trades/trade-screenshot";
+import { avatarCache } from "@/app/hooks/use-avatar-thumbnail";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -28,6 +29,10 @@ export function transformTradeForScreenshot(trade: Trade): ScreenshotTrade {
     ...(typeof item.value === 'number' ? { value: item.value } : {}),
   });
 
+  // Create a unique avatar for the receiver (current user) using a data URL
+  // This is a specially styled SVG avatar that's distinct from the default placeholder
+  const receiverAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%231A1A2E'/%3E%3Ccircle cx='75' cy='55' r='25' fill='%23FAFAFA'/%3E%3Crect x='40' y='85' width='70' height='45' rx='10' fill='%23FAFAFA'/%3E%3Ccircle cx='55' cy='50' r='5' fill='%231A1A2E'/%3E%3Ccircle cx='95' cy='50' r='5' fill='%231A1A2E'/%3E%3Cpath d='M60,65 Q75,80 90,65' stroke='%231A1A2E' stroke-width='3' fill='none'/%3E%3C/svg%3E";
+
   return {
     id: trade.id.toString(),
     created: trade.created,
@@ -37,7 +42,7 @@ export function transformTradeForScreenshot(trade: Trade): ScreenshotTrade {
     },
     receiver: {
       displayName: "You",
-      avatar: "https://www.gravatar.com/avatar/00000000000000000000000000000000?d=mp&f=y",
+      avatar: receiverAvatar, // Use a distinct avatar for the current user
     },
     sending: trade.items.requesting.map(transformItem),
     receiving: trade.items.offering.map(transformItem),
@@ -101,6 +106,11 @@ export function transformTradeForDetail(tradeData: any): Trade {
       status = 'Declined';
     }
 
+    // Check if we have the user's avatar in the cache
+    const userId = otherUserOffer.user.id;
+    const cachedAvatar = avatarCache.get(userId);
+    const defaultAvatar = `https://tr.rbxcdn.com/30DAY-AvatarHeadshot-placeholder/150/150/AvatarHeadshot/Png/noFilter`;
+
     // Create the transformed trade object
     return {
       id: tradeData.id,
@@ -108,8 +118,8 @@ export function transformTradeForDetail(tradeData: any): Trade {
         id: otherUserOffer.user.id,
         name: otherUserOffer.user.name,
         displayName: otherUserOffer.user.displayName,
-        // Use a placeholder avatar that follows Roblox's URL format for avatars
-        avatar: `https://tr.rbxcdn.com/30DAY-AvatarHeadshot-placeholder/150/150/AvatarHeadshot/Png/noFilter`
+        // Use cached avatar if available, otherwise use placeholder
+        avatar: cachedAvatar || defaultAvatar
       },
       status,
       items: {

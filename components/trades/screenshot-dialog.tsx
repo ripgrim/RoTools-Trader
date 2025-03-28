@@ -122,7 +122,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
               <!-- Sender -->
               <div class="space-y-2">
                 <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-full overflow-hidden">
+                  <div class="w-8 h-8 rounded-none overflow-hidden">
                     <img src="${trade.sender.avatar}" alt="${trade.sender.displayName}" class="w-full h-full object-cover" />
                   </div>
                   <span class="text-sm font-medium truncate">${trade.sender.displayName}</span>
@@ -139,7 +139,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
               <!-- Receiver -->
               <div class="space-y-2">
                 <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-full overflow-hidden">
+                  <div class="w-8 h-8 rounded-none overflow-hidden">
                     <img src="${trade.receiver.avatar}" alt="${trade.receiver.displayName}" class="w-full h-full object-cover" />
                   </div>
                   <span class="text-sm font-medium truncate">${trade.receiver.displayName}</span>
@@ -177,9 +177,9 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
         if (sendingItemsContainer) {
           trade.sending.forEach(item => {
             const itemElement = document.createElement('div');
-            itemElement.className = 'item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm';
+            itemElement.className = 'item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none';
             itemElement.innerHTML = `
-              <div class="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+              <div class="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
                 <img src="${item.thumbnail}" alt="${item.name}" class="w-full h-full object-cover" />
               </div>
               <div class="flex-1 min-w-0">
@@ -214,9 +214,9 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
         if (receivingItemsContainer) {
           trade.receiving.forEach(item => {
             const itemElement = document.createElement('div');
-            itemElement.className = 'item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm';
+            itemElement.className = 'item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none';
             itemElement.innerHTML = `
-              <div class="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+              <div class="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
                 <img src="${item.thumbnail}" alt="${item.name}" class="w-full h-full object-cover" />
               </div>
               <div class="flex-1 min-w-0">
@@ -417,7 +417,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
             </div>
           ) : (
             <>
-              <div className="aspect-[3/2] bg-zinc-950 rounded-lg overflow-hidden">
+              <div className="aspect-[3/2] bg-zinc-950 rounded-none overflow-hidden">
                 {imageUrl ? (
                   <img
                     src={imageUrl}

@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Star, Shield } from "lucide-react";
+import { TrendingUp, TrendingDown, Star, Shield, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { RobuxIcon } from "@/components/ui/robux-icon";
+import { useRobloxAuthContext } from '@/app/providers/roblox-auth-provider';
+import { useAvatarThumbnail } from '@/app/hooks/use-avatar-thumbnail';
 
 interface RobloxUser {
   id: number;
@@ -84,15 +86,34 @@ export default function ProfilePage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isAuthenticated, cookie } = useRobloxAuthContext();
+  
+  // Use the avatar thumbnail hook for the profile image
+  const { avatar, isLoading: isAvatarLoading } = useAvatarThumbnail(
+    user?.id, 
+    null // We'll let the hook fetch the avatar
+  );
 
   useEffect(() => {
     const fetchData = async () => {
+      // Don't fetch if not authenticated
+      if (!isAuthenticated || !cookie) {
+        setError("Please log in to view your profile");
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
 
         // Fetch profile data
-        const profileResponse = await fetch("/api/profile");
+        const profileResponse = await fetch("/api/profile", {
+          headers: {
+            'x-roblox-cookie': cookie
+          }
+        });
+        
         if (!profileResponse.ok) {
           throw new Error("Failed to fetch profile");
         }
@@ -100,7 +121,12 @@ export default function ProfilePage() {
         setUser(userData);
 
         // Fetch inventory data
-        const inventoryResponse = await fetch("/api/inventory");
+        const inventoryResponse = await fetch("/api/inventory", {
+          headers: {
+            'x-roblox-cookie': cookie
+          }
+        });
+        
         if (!inventoryResponse.ok) {
           throw new Error("Failed to fetch inventory");
         }
@@ -115,22 +141,35 @@ export default function ProfilePage() {
     };
 
     fetchData();
-  }, []);
+  }, [isAuthenticated, cookie]);
 
   if (isLoading) {
     return (
       <main className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto space-y-8">
-            <div className="space-y-4">
-              <Skeleton className="h-12 w-48" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full" />
-              ))}
-            </div>
+            {isAuthenticated ? (
+              <>
+                <div className="space-y-4">
+                  <Skeleton className="h-12 w-48" />
+                  <Skeleton className="h-24 w-full" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <Skeleton key={i} className="h-32 w-full" />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="p-8 bg-zinc-900/50 border border-zinc-800 text-center">
+                <Shield className="w-12 h-12 text-zinc-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-zinc-100 mb-2">Checking Authentication...</h2>
+                <div className="flex justify-center my-4">
+                  <div className="w-6 h-6 border-2 border-zinc-500 border-t-zinc-300 rounded-full animate-spin"></div>
+                </div>
+                <p className="text-zinc-400">Please wait while we verify your login status.</p>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -142,11 +181,25 @@ export default function ProfilePage() {
       <main className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
-            <div className="p-4 bg-red-500/10 border border-red-500/20">
-              <p className="text-red-400">
-                {error || "Failed to load profile data"}
-              </p>
-            </div>
+            {!isAuthenticated ? (
+              <div className="p-8 bg-zinc-900/50 border border-zinc-800 text-center">
+                <Shield className="w-12 h-12 text-zinc-500 mx-auto mb-4" />
+                <h2 className="text-xl font-semibold text-zinc-100 mb-2">Authentication Required</h2>
+                <p className="text-zinc-400 mb-6">Please log in to view your profile and inventory.</p>
+                <button 
+                  className="px-4 py-2 bg-zinc-800 text-zinc-200 hover:bg-zinc-700 transition-colors"
+                  onClick={() => window.location.href = "/"}
+                >
+                  Return to Home
+                </button>
+              </div>
+            ) : (
+              <div className="p-4 bg-red-500/10 border border-red-500/20">
+                <p className="text-red-400">
+                  {error || "Failed to load profile data"}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </main>
@@ -172,14 +225,25 @@ export default function ProfilePage() {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-zinc-800 border border-zinc-700">
-                <Image
-                  src={`https://tr.rbxcdn.com/30DAY-AvatarHeadshot-7181BD1227746006A9A38A4464AA8EF0-Png/150/150/AvatarHeadshot/Webp/noFilter`}
-                  alt={user.displayName}
-                  width={64}
-                  height={64}
-                  className="w-full h-full object-cover"
-                />
+              <div className="w-16 h-16 bg-zinc-800 border border-zinc-700 relative">
+                {isAvatarLoading ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 text-zinc-500 animate-spin" />
+                  </div>
+                ) : (
+                  <Image
+                    src={avatar || `/api/fallback-avatar?userId=${user.id}`}
+                    alt={user.displayName}
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error("Avatar image failed to load:", e);
+                      // Fallback to a default SVG avatar
+                      e.currentTarget.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect width='150' height='150' fill='%232A2A2A'/%3E%3Cpath d='M75,40 C87,40 97,50 97,62 C97,74 87,84 75,84 C63,84 53,74 53,62 C53,50 63,40 75,40 Z M75,94 C98,94 116,105 116,120 L116,125 L34,125 L34,120 C34,105 52,94 75,94 Z' fill='%23666666'/%3E%3C/svg%3E";
+                    }}
+                  />
+                )}
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-zinc-100">{user.displayName}</h1>
@@ -192,7 +256,7 @@ export default function ProfilePage() {
               </div>
               {user.isBanned && (
                 <div className="text-red-400 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                  <span className="w-1.5 h-1.5 rounded-none bg-red-400 animate-pulse" />
                   Banned
                 </div>
               )}
@@ -204,6 +268,12 @@ export default function ProfilePage() {
             </div>
           )}
         </motion.div>
+
+        <div className="mb-6 text-center">
+          <p className="text-xs text-zinc-500">
+            Your profile data and inventory are now fetched using your authenticated account
+          </p>
+        </div>
 
         {/* Stats Section */}
         <motion.div 

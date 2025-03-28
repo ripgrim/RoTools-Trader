@@ -16,18 +16,41 @@ import { transformTradeForScreenshot } from "@/lib/utils";
 import { useAvatarThumbnail } from '@/app/hooks/use-avatar-thumbnail';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TradeItem as TradeItemComponent } from './trade-item';
+import { useRobloxAuthContext } from '@/app/providers/roblox-auth-provider';
+import { useToast } from '@/hooks/use-toast';
+import { useTradeActions } from '@/app/providers/trade-actions-provider';
+import { useRouter } from "next/navigation";
 
 interface TradeDetailProps {
   trade: Trade;
-  isOpen?: boolean;
-  onClose?: () => void;
+  isOpen: boolean;
+  onClose: (open: boolean) => void;
+  avatarUrl?: string;
 }
 
-export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps) {
+export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailProps) {
   const tradeContentRef = useRef<HTMLDivElement>(null);
   const [isScreenshotOpen, setIsScreenshotOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isDeclining, setIsDeclining] = useState(false);
+  const [isCountering, setIsCountering] = useState(false);
   const { avatar, isLoading: isAvatarLoading } = useAvatarThumbnail(trade.user.id, trade.user.avatar);
+  const { cookie } = useRobloxAuthContext();
+  const { toast } = useToast();
+  const { acceptTrade, declineTrade, counterTrade, refreshInboundCount } = useTradeActions();
+  const router = useRouter();
+
+  // Helper functions for calculations
+  const getItemValue = (item: TradeItemType): number | null => {
+    const value = item.value;
+    return typeof value === 'number' ? value : null;
+  };
+  
+  const getItemRap = (item: TradeItemType): number | null => {
+    const rap = item.rap;
+    return typeof rap === 'number' ? rap : null;
+  };
 
   const generateImage = async () => {
     if (!tradeContentRef.current) return;
@@ -102,17 +125,6 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
       }
     });
   }, [trade]);
-
-  // Helper functions for calculations
-  const getItemValue = (item: TradeItemType): number | null => {
-    const value = item.value;
-    return typeof value === 'number' ? value : null;
-  };
-  
-  const getItemRap = (item: TradeItemType): number | null => {
-    const rap = item.rap;
-    return typeof rap === 'number' ? rap : null;
-  };
   
   const calculateTotal = (items: TradeItemType[], getValue: (item: TradeItemType) => number | null) => {
     const total = items.reduce((sum, item) => {
@@ -167,6 +179,69 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
 
   // Get the appropriate headings
   const headings = getItemHeadings();
+
+  const handleAcceptTrade = async () => {
+    if (isAccepting) return;
+    
+    setIsAccepting(true);
+    try {
+      await acceptTrade(trade.id);
+      toast({
+        title: "Trade Accepted",
+        description: "You have accepted the trade.",
+      });
+      refreshInboundCount();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to accept trade",
+        variant: "destructive"
+      });
+    } finally {
+      setIsAccepting(false);
+    }
+  };
+
+  const handleDeclineTrade = async () => {
+    if (isDeclining) return;
+    
+    setIsDeclining(true);
+    try {
+      await declineTrade(trade.id);
+      toast({
+        title: "Trade Declined",
+        description: "You have declined the trade.",
+      });
+      refreshInboundCount();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to decline trade",
+        variant: "destructive"
+      });
+    } finally {
+      setIsDeclining(false);
+    }
+  };
+
+  const handleCounterTrade = async () => {
+    if (isCountering) return;
+    
+    setIsCountering(true);
+    try {
+      await counterTrade(trade.id);
+      // The navigation happens inside the counterTrade function
+    } catch (error) {
+      console.error("Error creating counter trade:", error);
+      toast({
+        title: "Counter Trade Error",
+        description: "Failed to create counter trade. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCountering(false);
+    }
+  };
 
   const content = (
     <div className="h-full bg-background">
@@ -337,31 +412,60 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
           <div className="py-6 border-zinc-800 px-0">
             <div className="flex flex-col md:flex-row gap-4 md:justify-end">
               <Button
-                variant="outline"
                 size="lg"
                 className="w-full md:w-auto border-zinc-800 text-zinc-400 hover:bg-background hover:text-zinc-100 hover:border-zinc-600"
-                onClick={() => {}}
+                onClick={handleDeclineTrade}
+                disabled={isDeclining || isAccepting || isCountering}
               >
-                <XCircle className="w-5 h-5 mr-2" />
-                Decline Trade
+                {isDeclining ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Declining...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-5 h-5 mr-2" />
+                    Decline Trade
+                  </>
+                )}
               </Button>
               <Button
                 variant="outline"
                 size="lg"
                 className="w-full md:w-auto border-zinc-800 text-zinc-400 hover:bg-background hover:text-zinc-100 hover:border-zinc-600"
-                onClick={() => {}}
+                onClick={handleCounterTrade}
+                disabled={isCountering || isAccepting || isDeclining}
               >
-                <ArrowLeftRight  className="w-5 h-5 mr-2" />
-                Counter Trade
+                {isCountering ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Preparing Counter...
+                  </>
+                ) : (
+                  <>
+                    <ArrowLeftRight className="w-5 h-5 mr-2" />
+                    Counter Trade
+                  </>
+                )}
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full md:w-auto border-zinc-800 text-zinc-400 hover:bg-background hover:text-zinc-100 hover:border-zinc-600"
-                onClick={() => {}}
+                onClick={handleAcceptTrade}
+                disabled={isAccepting || isDeclining || isCountering}
               >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                Accept Trade
+                {isAccepting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Accepting...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Accept Trade
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -384,7 +488,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
           <Drawer.Overlay className="fixed inset-0 bg-black/40" />
           <Drawer.Content className="bg-background flex flex-col rounded-t-[10px] h-[96%] mt-24 fixed bottom-0 left-0 right-0">
             <div className="p-4 bg-background rounded-t-[10px] flex-1 overflow-auto">
-              <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-zinc-800 mb-8" />
+              <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-none bg-zinc-800 mb-8" />
               {content}
             </div>
           </Drawer.Content>

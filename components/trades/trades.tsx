@@ -8,11 +8,10 @@ import { TradeDetail } from './trade-detail';
 import { useTradeDetails } from '@/app/hooks/use-trade-details';
 import { TradeSkeleton } from './trade-skeleton';
 import { TradeItemSkeleton } from './trade-item-skeleton';
-import { PackageOpen, ShoppingBag, ArrowDownLeft, ArrowUpRight, CheckSquare } from 'lucide-react';
-
-interface TradesProps {
-  trades: Trade[];
-}
+import { PackageOpen, ShoppingBag, ArrowDownLeft, ArrowUpRight, CheckSquare, RefreshCw } from 'lucide-react';
+import { useTrades } from '@/app/hooks/use-trades';
+import { useTradeActions } from '@/app/providers/trade-actions-provider';
+import { Button } from '../ui/button';
 
 // Empty state component for when there are no trades
 function EmptyTradeDetail({ type }: { type: string }) {
@@ -62,7 +61,7 @@ function EmptyTradeDetail({ type }: { type: string }) {
   );
 }
 
-export function Trades({ trades }: TradesProps) {
+export function Trades({ trades }: { trades?: Trade[] }) {
   const [selectedTradeId, setSelectedTradeId] = useState<string | number | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -74,14 +73,38 @@ export function Trades({ trades }: TradesProps) {
   // We'll use either the detailed trade (if loaded) or the original list item
   const [displayTrade, setDisplayTrade] = useState<Trade | null>(null);
 
-  // Get current tab's trades
-  const getCurrentTabTrades = () => {
-    let statusFilter = 'Inbound';
-    if (activeTab === 'outbound') statusFilter = 'Outbound';
-    if (activeTab === 'completed') statusFilter = 'Completed';
-    
-    return trades.filter(t => t.status === statusFilter);
+  // Get trades hooks for pagination
+  const { 
+    displayedTrades, 
+    loadMoreTrades, 
+    hasMoreTrades, 
+    isLoadingMore,
+    inboundCount,
+    isCountLoading,
+    refreshInboundCount,
+    refetch: refreshAllTrades
+  } = useTrades();
+  
+  // State for refresh button loading
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Handle refreshing all trades
+  const handleRefreshTrades = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshAllTrades();
+    } finally {
+      setIsRefreshing(false);
+    }
   };
+  
+  // Register the refresh function with the global TradeActions context
+  const { registerRefreshFunction } = useTradeActions();
+  
+  // Register the refresh function
+  useEffect(() => {
+    registerRefreshFunction(refreshInboundCount);
+  }, [registerRefreshFunction, refreshInboundCount]);
 
   // Handle window resize and initial mobile check
   useEffect(() => {
@@ -123,7 +146,7 @@ export function Trades({ trades }: TradesProps) {
       setDisplayTrade(null);
       setIsDrawerOpen(false);
     }
-  }, [activeTab, isMobile, trades]);
+  }, [activeTab, isMobile, displayedTrades]);
 
   // Update the display trade when detailed trade data is loaded
   useEffect(() => {
@@ -132,10 +155,15 @@ export function Trades({ trades }: TradesProps) {
       setDisplayTrade(detailedTrade);
     } else if (selectedTradeId && !isTradeLoading) {
       // If loading failed or there's an error, fall back to the list item
-      const fallbackTrade = trades.find(t => t.id === selectedTradeId);
+      const allTrades = [
+        ...displayedTrades.inbound,
+        ...displayedTrades.outbound,
+        ...displayedTrades.completed
+      ];
+      const fallbackTrade = allTrades.find(t => t.id === selectedTradeId);
       if (fallbackTrade) setDisplayTrade(fallbackTrade);
     }
-  }, [detailedTrade, isTradeLoading, selectedTradeId, trades]);
+  }, [detailedTrade, isTradeLoading, selectedTradeId, displayedTrades]);
 
   const handleTradeSelect = (trade: Trade) => {
     console.log('Selected Trade:', {
@@ -171,7 +199,41 @@ export function Trades({ trades }: TradesProps) {
   const handleTabChange = (value: string) => {
     console.log(`Switching to tab: ${value}`);
     setActiveTab(value);
+    
+    // Refresh inbound count when switching tabs
+    if (value === 'inbound') {
+      refreshInboundCount();
+    }
+    
     // Don't clear selection here, let the effect handle it
+  };
+
+  const handleLoadMore = () => {
+    // Load more trades based on the active tab
+    if (activeTab === 'inbound') {
+      loadMoreTrades('inbound');
+    } else if (activeTab === 'outbound') {
+      loadMoreTrades('outbound');
+    } else if (activeTab === 'completed') {
+      loadMoreTrades('completed');
+    }
+  };
+
+  // Check if current tab has more trades to load
+  const canLoadMore = () => {
+    if (activeTab === 'inbound') return hasMoreTrades('inbound');
+    if (activeTab === 'outbound') return hasMoreTrades('outbound');
+    if (activeTab === 'completed') return hasMoreTrades('completed');
+    return false;
+  };
+
+  // Get current tab's trades
+  const getCurrentTabTrades = () => {
+    // Now use the displayedTrades from the hook
+    if (activeTab === 'inbound') return displayedTrades.inbound;
+    if (activeTab === 'outbound') return displayedTrades.outbound;
+    if (activeTab === 'completed') return displayedTrades.completed;
+    return [];
   };
 
   // Render the trade details or a loading state
@@ -211,49 +273,112 @@ export function Trades({ trades }: TradesProps) {
     );
   };
 
-  // Filter trades by current tab
-  const inboundTrades = trades.filter(t => t.status === 'Inbound');
-  const outboundTrades = trades.filter(t => t.status === 'Outbound');
-  const completedTrades = trades.filter(t => t.status === 'Completed');
-
   return (
     <div className="flex h-full">
       <div className="w-full md:w-[400px] md:border-r border-zinc-800 h-full overflow-auto">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full flex flex-col">
-          <TabsList className="justify-start px-6 py-6 bg-transparent border-b border-zinc-800">
-            <TabsTrigger value="inbound" className="data-[state=active]:bg-background">
-              Inbound
-            </TabsTrigger>
-            <TabsTrigger value="outbound" className="data-[state=active]:bg-background">
-              Outbound
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="data-[state=active]:bg-background">
-              Completed
-            </TabsTrigger>
+          <TabsList className="justify-between px-6 py-6 bg-transparent border-b border-zinc-800">
+            <div className="flex">
+              <TabsTrigger value="inbound" className="data-[state=active]:bg-background group relative">
+                Inbound
+                {inboundCount > 0 && (
+                  <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-black font-medium">
+                    {inboundCount > 99 ? '99+' : inboundCount}
+                  </span>
+                )}
+                {isCountLoading && (
+                  <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-none bg-zinc-700 text-xs text-zinc-300 animate-pulse">
+                    •••
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="outbound" className="data-[state=active]:bg-background">
+                Outbound
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="data-[state=active]:bg-background">
+                Completed
+              </TabsTrigger>
+            </div>
+            
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="h-8 border-zinc-800 text-zinc-400"
+              onClick={handleRefreshTrades}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
           </TabsList>
           <TabsContent value="inbound" className="flex-1 px-6 py-4">
-            <TradeList 
-              trades={inboundTrades}
-              selectedTrade={displayTrade}
-              onSelectTrade={handleTradeSelect}
-              type="inbound"
-            />
+            <div className="space-y-4">
+              <TradeList 
+                trades={displayedTrades.inbound}
+                selectedTrade={displayTrade}
+                onSelectTrade={handleTradeSelect}
+                type="inbound"
+              />
+              
+              {canLoadMore() && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    variant="outline"
+                    className="px-4 py-2 text-sm font-medium text-zinc-300 bg-background border border-zinc-700 hover:bg-zinc-700/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoadingMore ? 'Loading...' : 'Load More'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="outbound" className="flex-1 px-6 py-4">
-            <TradeList 
-              trades={outboundTrades}
-              selectedTrade={displayTrade}
-              onSelectTrade={handleTradeSelect}
-              type="outbound"
-            />
+            <div className="space-y-4">
+              <TradeList 
+                trades={displayedTrades.outbound}
+                selectedTrade={displayTrade}
+                onSelectTrade={handleTradeSelect}
+                type="outbound"
+              />
+              
+              {canLoadMore() && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    variant="outline"
+                    className="px-4 py-2 text-sm font-medium text-zinc-300 bg-background border border-zinc-700 hover:bg-zinc-700/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoadingMore ? 'Loading...' : 'Load More'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </TabsContent>
           <TabsContent value="completed" className="flex-1 px-6 py-4">
-            <TradeList 
-              trades={completedTrades}
-              selectedTrade={displayTrade}
-              onSelectTrade={handleTradeSelect}
-              type="completed"
-            />
+            <div className="space-y-4">
+              <TradeList 
+                trades={displayedTrades.completed}
+                selectedTrade={displayTrade}
+                onSelectTrade={handleTradeSelect}
+                type="completed"
+              />
+              
+              {canLoadMore() && (
+                <div className="flex justify-center pt-4">
+                  <Button
+                    onClick={handleLoadMore}
+                    disabled={isLoadingMore}
+                    variant="outline"
+                    className="px-4 py-2 text-sm font-medium text-zinc-300 bg-background border border-zinc-700 hover:bg-zinc-700/70 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isLoadingMore ? 'Loading...' : 'Load More'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

@@ -38,13 +38,13 @@ export function Header() {
             {/* Profile Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
+                <Button variant="ghost" className="relative h-10 w-10 rounded-none p-0">
                   <Image
                     src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-7181BD1227746006A9A38A4464AA8EF0-Png/150/150/AvatarHeadshot/Webp/noFilter"
                     alt="Avatar"
                     height={40}
                     width={40}
-                    className="rounded-full border border-zinc-700"
+                    className="rounded-none border border-zinc-700"
                   />
                 </Button>
               </DropdownMenuTrigger>

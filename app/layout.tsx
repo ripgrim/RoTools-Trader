@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { TokenProvider } from "@/providers/token-provider";
 import { RobloxAuthProvider } from '@/app/providers/roblox-auth-provider';
+import { TradeActionsProvider } from '@/app/providers/trade-actions-provider';
 import { Header } from "@/components/header";
 
 const inter = Inter({ subsets: ['latin'] });
@@ -30,18 +31,20 @@ export default function RootLayout({
       <body className={inter.className}>
         <RobloxAuthProvider>
           <TokenProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="dark"
-              enableSystem
-              disableTransitionOnChange
-            >
-              <div className="relative min-h-screen bg-zinc-950">
-                <Header />
-                {children}
-                <Toaster />
-              </div>
-            </ThemeProvider>
+            <TradeActionsProvider>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                enableSystem
+                disableTransitionOnChange
+              >
+                <div className="relative min-h-screen bg-zinc-950">
+                  <Header />
+                  {children}
+                  <Toaster />
+                </div>
+              </ThemeProvider>
+            </TradeActionsProvider>
           </TokenProvider>
         </RobloxAuthProvider>
       </body>

@@ -66,7 +66,7 @@ export function TokenDialog({ open }: TokenDialogProps) {
 
   const buttonContent = isSubmitting ? (
     <div className="flex items-center gap-2">
-      <div className="h-4 w-4 border-2 border-zinc-400 border-t-zinc-100 rounded-full animate-spin" />
+      <div className="h-4 w-4 border-2 border-zinc-400 border-t-zinc-100 rounded-none animate-spin" />
       <span>Saving...</span>
     </div>
   ) : (

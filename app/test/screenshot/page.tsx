@@ -146,7 +146,7 @@ export default function TestScreenshotPage() {
           </div>
         </div>
         
-        <div className="overflow-auto border border-zinc-800 rounded-lg mb-4" style={{ maxHeight: '500px', background: '#09090B' }}>
+        <div className="overflow-auto border border-zinc-800 rounded-none mb-4" style={{ maxHeight: '500px', background: '#09090B' }}>
           <div 
             ref={rawPreviewRef} 
             className="inline-block p-4"
@@ -161,7 +161,7 @@ export default function TestScreenshotPage() {
         {/* Screenshot target */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Screenshot Target</h2>
-          <div className="bg-zinc-950 p-4 rounded-lg mb-4">
+          <div className="bg-zinc-950 p-4 rounded-none mb-4">
             <div data-screenshot-target="true">
               <TradeScreenshot trade={defaultTrade} />
             </div>
@@ -184,15 +184,15 @@ export default function TestScreenshotPage() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Generated Screenshot</h2>
           {imageUrl ? (
-            <div className="bg-zinc-950 p-4 rounded-lg">
+            <div className="bg-zinc-950 p-4 rounded-none">
               <img 
                 src={imageUrl} 
                 alt="Screenshot" 
-                className="w-full border border-zinc-800 rounded-lg"
+                className="w-full border border-zinc-800 rounded-none"
               />
             </div>
           ) : (
-            <div className="flex items-center justify-center h-64 border border-dashed border-zinc-700 rounded-lg p-8 bg-zinc-900/50">
+            <div className="flex items-center justify-center h-64 border border-dashed border-zinc-700 rounded-none p-8 bg-zinc-900/50">
               <p className="text-zinc-400 text-center">
                 Screenshot will appear here after you click "Generate Screenshot"
               </p>
@@ -215,7 +215,7 @@ export default function TestScreenshotPage() {
         </div>
       </div>
       
-      <div className="mt-8 p-4 bg-zinc-900/50 border border-zinc-800 rounded-lg">
+      <div className="mt-8 p-4 bg-zinc-900/50 border border-zinc-800 rounded-none">
         <h3 className="font-medium mb-2">How it works:</h3>
         <p className="text-sm text-zinc-400">
           This test uses <code className="bg-zinc-800 px-1 py-0.5 rounded">html2canvas</code> directly to capture screenshots. The styling adjustments are applied during capture via the <code className="bg-zinc-800 px-1 py-0.5 rounded">onclone</code> callback to fix layout issues.

@@ -31,7 +31,7 @@ export function TradesSkeleton() {
           <div className="p-6 border-b border-zinc-800">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
-                <div className="h-12 w-12 bg-zinc-800 rounded-full" />
+                <div className="h-12 w-12 bg-zinc-800 rounded-none" />
                 <div className="space-y-2">
                   <div className="h-6 w-48 bg-zinc-800 rounded" />
                   <div className="h-4 w-24 bg-zinc-800 rounded" />
