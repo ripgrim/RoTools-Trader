@@ -22,14 +22,14 @@ type TrendText = 'None' | 'Lowering' | 'Unstable' | 'Stable' | 'Raising' | 'Fluc
 const itemsCache: Record<string, ItemDetail> = {};
 let allItemsData: any = null;
 let lastFetchTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 0; // Set to 0 to disable caching temporarily
 
 export function useItemDetails() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Function to fetch all items from the API
-  const fetchAllItems = useCallback(async (force = false) => {
+  const fetchAllItems = useCallback(async (force = true) => {
     const now = Date.now();
     
     // Return cached data if it's still fresh
@@ -71,13 +71,18 @@ export function useItemDetails() {
   const getItemDetails = useCallback(async (itemId: string | number): Promise<ItemDetail | null> => {
     const id = itemId.toString();
     
-    // Check if we have this item in cache
+    // Clear cache for this specific item
     if (itemsCache[id]) {
-      return itemsCache[id];
+      console.log(`[DEBUG] Clearing cache for item ${id}`, itemsCache[id]);
+      delete itemsCache[id];
     }
     
-    // Fetch all items if we don't have the data yet
-    const data = allItemsData || await fetchAllItems();
+    // Add debug timestamp to prevent any caching issues
+    const timestamp = Date.now(); 
+    console.log(`[DEBUG] Fetching fresh data for item ${id} at ${timestamp}`);
+    
+    // Fetch all items for each request
+    const data = await fetchAllItems(true);
     if (!data || !data.items || !data.items[id]) {
       console.log(`Item ${id} not found in Rolimons data`);
       return null;
@@ -98,8 +103,16 @@ export function useItemDetails() {
       rare: item[9]
     };
     
-    // Cache the item data
-    itemsCache[id] = itemDetail;
+    // Add debug logging for the parsed item
+    console.log(`[DEBUG] Item ${id} details:`, {
+      name: itemDetail.name,
+      value: itemDetail.value,
+      rap: itemDetail.rap,
+      timestamp: timestamp
+    });
+    
+    // Don't cache the item data for now
+    // itemsCache[id] = itemDetail;
     
     return itemDetail;
   }, [fetchAllItems]);

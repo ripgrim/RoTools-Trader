@@ -240,7 +240,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                     </div>
                   ` : ''}
                 </div>
-    </div>
+              </div>
             `;
             receivingItemsContainer.appendChild(itemElement);
           });

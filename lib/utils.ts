@@ -17,12 +17,22 @@ export function formatNumber(num: number | null | undefined): string {
 }
 
 export function transformTradeForScreenshot(trade: Trade): ScreenshotTrade {
-  // Calculate total values
+  // Function to get preferred value (similar to trade-detail.tsx)
+  const getPreferredValue = (item: TradeItem): number => {
+    const value = typeof item.value === 'number' ? item.value : null;
+    const hasValidValue = value !== null && value !== -1;
+    const rap = typeof item.rap === 'number' ? item.rap : 0;
+    
+    // Return value if it exists and is valid, otherwise fallback to RAP
+    return hasValidValue ? value : rap;
+  };
+
+  // Calculate total values using preferred value logic
   const sendingValue = trade.items.requesting.reduce((sum, item) => 
-    sum + (typeof item.value === 'number' ? item.value : 0), 0
+    sum + getPreferredValue(item), 0
   );
   const receivingValue = trade.items.offering.reduce((sum, item) => 
-    sum + (typeof item.value === 'number' ? item.value : 0), 0
+    sum + getPreferredValue(item), 0
   );
   const valueDiff = receivingValue - sendingValue;
   const valueDiffPercentage = Math.round(sendingValue === 0 ? 0 : (valueDiff / sendingValue) * 100);

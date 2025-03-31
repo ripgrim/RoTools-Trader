@@ -3,7 +3,7 @@
 import { Trade, TradeItem as TradeItemType } from '@/app/types/trade';
 import { format, parseISO, formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { ArrowLeftRight, Camera, CheckCircle, Circle, CircleArrowOutUpLeft, XCircle, Loader2, Construction, HardHat } from 'lucide-react';
+import { ArrowLeftRight, Camera, CheckCircle, Circle, CircleArrowOutUpLeft, XCircle, Loader2, Construction, HardHat, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LimitedIcon } from '@/components/ui/limited-icon';
 import { RobuxIcon } from '@/components/ui/robux-icon';
@@ -12,7 +12,7 @@ import { Drawer } from 'vaul';
 import { useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { ScreenshotDialog } from './screenshot-dialog';
-import { transformTradeForScreenshot, formatNumber } from "@/lib/utils";
+import { transformTradeForScreenshot, formatNumber, transformTradeForDetail } from "@/lib/utils";
 import { useAvatarThumbnail } from '@/app/hooks/use-avatar-thumbnail';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TradeItem as TradeItemComponent } from './trade-item';
@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTradeActions } from '@/app/providers/trade-actions-provider';
 import { useRouter } from "next/navigation";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useItemDetails } from '@/app/hooks/use-item-details';
 
 interface TradeDetailProps {
   trade: Trade;
@@ -29,18 +30,161 @@ interface TradeDetailProps {
   avatarUrl?: string;
 }
 
-export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailProps) {
+export function TradeDetail({ trade: initialTrade, isOpen, onClose, avatarUrl }: TradeDetailProps) {
   const tradeContentRef = useRef<HTMLDivElement>(null);
+  const [trade, setTrade] = useState(initialTrade);
   const [isScreenshotOpen, setIsScreenshotOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAccepting, setIsAccepting] = useState(false);
   const [isDeclining, setIsDeclining] = useState(false);
   const [isCountering] = useState(false);
+  const [isSyncingValues, setIsSyncingValues] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [isLoadingFreshTrade, setIsLoadingFreshTrade] = useState(false);
   const { avatar, isLoading: isAvatarLoading } = useAvatarThumbnail(trade.user.id, trade.user.avatar);
   const { cookie } = useRobloxAuthContext();
   const { toast } = useToast();
   const { acceptTrade, declineTrade, counterTrade, refreshInboundCount } = useTradeActions();
   const router = useRouter();
+  const { getItemDetails } = useItemDetails();
+
+  // Fetch fresh trade data when the drawer is opened
+  useEffect(() => {
+    // Only fetch data when the drawer is open
+    if (!isOpen || !initialTrade.id || !cookie) return;
+    
+    const fetchFreshTradeData = async () => {
+      // Check if the initial trade already has current values 
+      // (might be prefetched by the trade list)
+      const hasCompleteTrade = initialTrade.items &&
+        initialTrade.items.offering?.every(item => item.value != null) &&
+        initialTrade.items.requesting?.every(item => item.value != null);
+      
+      if (hasCompleteTrade) {
+        console.log(`Trade ${initialTrade.id} already has complete data, skipping fetch`);
+        setTrade(initialTrade);
+        setLastRefreshed(new Date());
+        return;
+      }
+      
+      setIsLoadingFreshTrade(true);
+      try {
+        console.log(`Fetching fresh data for trade ${initialTrade.id}`);
+        const response = await fetch(`/api/roblox/trades/${initialTrade.id}`, {
+          headers: {
+            'x-roblox-cookie': cookie,
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch fresh trade data: ${response.status}`);
+        }
+        
+        const freshTradeData = await response.json();
+        console.log('Fetched fresh trade data:', freshTradeData);
+        
+        // Transform the trade data
+        const transformedTrade = transformTradeForDetail(freshTradeData);
+        
+        // Update trade state
+        setTrade(transformedTrade);
+        setLastRefreshed(new Date());
+        console.log('Updated trade with fresh data');
+        
+        // Immediately fetch values for all items in the trade
+        await fetchItemValues(transformedTrade);
+      } catch (error) {
+        console.error('Error fetching fresh trade data:', error);
+        // Fall back to the initial trade data if fetch fails
+        toast({
+          title: "Warning",
+          description: "Using cached trade data. Some values may be outdated.",
+          variant: "default"
+        });
+      } finally {
+        setIsLoadingFreshTrade(false);
+      }
+    };
+    
+    fetchFreshTradeData();
+  }, [isOpen, initialTrade, cookie]);
+  
+  // Function to fetch current values for all items in the trade
+  const fetchItemValues = async (currentTrade: Trade) => {
+    setIsSyncingValues(true);
+    console.log("Fetching current values for all items in trade");
+    
+    try {
+      const updatedTrade = { ...currentTrade };
+      let valueChanged = false;
+      
+      // Process offering items
+      for (let i = 0; i < updatedTrade.items.offering.length; i++) {
+        const item = updatedTrade.items.offering[i];
+        try {
+          const details = await getItemDetails(item.id);
+          if (details) {
+            // Check if value has changed
+            if (item.value !== details.value) {
+              valueChanged = true;
+              console.log(`Item ${item.id} (${item.name}) value changed: ${item.value} → ${details.value}`);
+            }
+            
+            // Update item with fresh values
+            updatedTrade.items.offering[i] = {
+              ...item,
+              value: details.value,
+              rap: details.rap
+            };
+          }
+        } catch (err) {
+          console.error(`Failed to fetch details for item ${item.id}:`, err);
+        }
+      }
+      
+      // Process requesting items
+      for (let i = 0; i < updatedTrade.items.requesting.length; i++) {
+        const item = updatedTrade.items.requesting[i];
+        try {
+          const details = await getItemDetails(item.id);
+          if (details) {
+            // Check if value has changed
+            if (item.value !== details.value) {
+              valueChanged = true;
+              console.log(`Item ${item.id} (${item.name}) value changed: ${item.value} → ${details.value}`);
+            }
+            
+            // Update item with fresh values
+            updatedTrade.items.requesting[i] = {
+              ...item,
+              value: details.value,
+              rap: details.rap
+            };
+          }
+        } catch (err) {
+          console.error(`Failed to fetch details for item ${item.id}:`, err);
+        }
+      }
+      
+      // Update the trade with fresh values
+      setTrade(updatedTrade);
+      setLastRefreshed(new Date());
+      
+      if (valueChanged) {
+        toast({
+          title: "Values Updated",
+          description: "Item values have been updated to the latest.",
+          variant: "default"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching item values:", error);
+    } finally {
+      setIsSyncingValues(false);
+    }
+  };
 
   // Helper functions for calculations
   const getItemValue = (item: TradeItemType): number | null => {
@@ -109,6 +253,7 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
           name: item.name,
           rap: getItemRap(item),
           value: getItemValue(item),
+          preferredValue: getPreferredValue(item),
           serial: item.serial,
           thumbnail: item.thumbnail
         })),
@@ -116,6 +261,7 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
           name: item.name,
           rap: getItemRap(item),
           value: getItemValue(item),
+          preferredValue: getPreferredValue(item),
           serial: item.serial,
           thumbnail: item.thumbnail
         }))
@@ -123,16 +269,24 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
       totals: {
         requesting: {
           rap: calculateTotal(trade.items.requesting, getItemRap),
-          value: calculateTotal(trade.items.requesting, getItemValue)
+          value: calculateTotal(trade.items.requesting, getItemValue),
+          effective: calculateTotal(trade.items.requesting, getPreferredValue)
         },
         offering: {
           rap: calculateTotal(trade.items.offering, getItemRap),
-          value: calculateTotal(trade.items.offering, getItemValue)
+          value: calculateTotal(trade.items.offering, getItemValue),
+          effective: calculateTotal(trade.items.offering, getPreferredValue)
         }
       },
       differences: {
         rap: calculateDifference(trade.items.offering, trade.items.requesting, getItemRap),
-        value: calculateDifference(trade.items.offering, trade.items.requesting, getItemValue)
+        value: calculateDifference(trade.items.offering, trade.items.requesting, getItemValue),
+        effective: calculateDifference(trade.items.offering, trade.items.requesting, getPreferredValue)
+      },
+      percentages: {
+        rap: calculatePercentage(trade.items.offering, trade.items.requesting, getItemRap),
+        value: calculatePercentage(trade.items.offering, trade.items.requesting, getItemValue),
+        effective: calculatePercentage(trade.items.offering, trade.items.requesting, getPreferredValue)
       }
     });
   }, [trade]);
@@ -241,6 +395,18 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
       description: "The counter trade feature is coming soon!",
       variant: "default"
     });
+  };
+
+  // New function to sync all item values
+  const syncAllItemValues = async () => {
+    if (isSyncingValues) return;
+    
+    toast({
+      title: "Syncing values",
+      description: "Fetching the latest item values from the API...",
+    });
+    
+    await fetchItemValues(trade);
   };
 
   const content = (
@@ -378,7 +544,38 @@ export function TradeDetail({ trade, isOpen, onClose, avatarUrl }: TradeDetailPr
 
         {/* Trade Summary */}
         <div className="mt-6 p-4 bg-zinc-900/50 rounded-none border border-zinc-800">
-          <h3 className="text-lg font-semibold text-zinc-100 mb-4">Trade Summary</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-zinc-100">Trade Summary</h3>
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-zinc-500">
+                {isLoadingFreshTrade ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Loading fresh data...
+                  </span>
+                ) : isSyncingValues ? (
+                  <span className="flex items-center">
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Updating...
+                  </span>
+                ) : (
+                  <span>
+                    Values as of {lastRefreshed.toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="text-xs gap-1.5 h-7 border-zinc-700"
+                onClick={syncAllItemValues}
+                disabled={isSyncingValues || isLoadingFreshTrade}
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${isSyncingValues || isLoadingFreshTrade ? 'animate-spin' : ''}`} />
+                Sync Values
+              </Button>
+            </div>
+          </div>
           <div className="grid grid-cols-2 gap-8">
             <div>
               <h4 className="text-zinc-400 mb-2">

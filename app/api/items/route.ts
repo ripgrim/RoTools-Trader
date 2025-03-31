@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 // Cache the items data in memory
 let itemsCache: any = null;
 let lastFetchTime: number = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_DURATION = 0; // Disable caching temporarily
 
 export async function GET() {
   try {
@@ -16,11 +16,17 @@ export async function GET() {
     }
 
     const url = "https://api.rolimons.com/items/v2/itemdetails";
-    console.log(`[Items API] Fetching all items from ${url}`);
+    console.log(`[Items API] Fetching all items from ${url} at ${now}`);
     
-    const response = await fetch(url, {
+    // Add a cache-busting parameter
+    const cacheBusterUrl = `${url}?t=${now}`;
+    
+    const response = await fetch(cacheBusterUrl, {
       headers: {
         "Accept": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
       },
     });
 
@@ -35,6 +41,19 @@ export async function GET() {
 
     const itemsData = await response.json();
     console.log(`[Items API] Successfully fetched ${Object.keys(itemsData.items || {}).length} items`);
+    
+    // Log a few sample items for debugging
+    const sampleItemIds = ["18262"]; // Catching Snowflakes
+    for (const id of sampleItemIds) {
+      if (itemsData.items[id]) {
+        console.log(`[Items API] Sample item ${id}:`, {
+          name: itemsData.items[id][0],
+          rap: itemsData.items[id][2],
+          value: itemsData.items[id][3],
+          timestamp: now
+        });
+      }
+    }
     
     // Cache the data
     itemsCache = itemsData;

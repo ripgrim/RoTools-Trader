@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingDown, TrendingUp, AlertTriangle, Star, Zap } from 'lucide-react';
+import { TrendingDown, TrendingUp, AlertTriangle, Star, Zap, RefreshCw } from 'lucide-react';
 import { useItemDetails } from '@/app/hooks/use-item-details';
 import { formatNumber } from '@/lib/utils';
 import Image from 'next/image';
 import { RobuxIcon } from '@/components/ui/robux-icon';
+import { Button } from '@/components/ui/button';
 
 interface ItemDetailsProps {
     itemId: string | number;
@@ -14,26 +15,31 @@ interface ItemDetailsProps {
 export function ItemDetails({ itemId }: ItemDetailsProps) {
     const [itemDetails, setItemDetails] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const { getItemDetails, getDemandText, getTrendText, isProjected, isHyped, isRare } = useItemDetails();
+
+    const fetchItemDetails = async (forceRefresh = false) => {
+        try {
+            setRefreshing(forceRefresh);
+            if (forceRefresh) {
+                setIsLoading(true);
+            }
+            const details = await getItemDetails(itemId);
+            setItemDetails(details);
+        } catch (error) {
+            console.error(`Failed to load details for item ${itemId}:`, error);
+        } finally {
+            setIsLoading(false);
+            setRefreshing(false);
+        }
+    };
 
     useEffect(() => {
         // Reset state when itemId changes
         setIsLoading(true);
         setItemDetails(null);
-
-        async function loadItemDetails() {
-            try {
-                const details = await getItemDetails(itemId);
-                setItemDetails(details);
-            } catch (error) {
-                console.error(`Failed to load details for item ${itemId}:`, error);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-
-        loadItemDetails();
-    }, [itemId, getItemDetails]);
+        fetchItemDetails();
+    }, [itemId]);
 
     if (isLoading) {
         return (
@@ -114,7 +120,7 @@ export function ItemDetails({ itemId }: ItemDetailsProps) {
                 ) : (
                     <>
                         {/* Value display when value exists */}
-                        <div className="font-semibold text-blue-500 flex items-center gap-1">
+                        <div className="font-semibold text-blue-500 flex items-center gap-1 relative group">
                             <Image
                                 src="/icons/rolimons_logo_icon_blue.png"
                                 alt="Rolimons"
@@ -123,6 +129,15 @@ export function ItemDetails({ itemId }: ItemDetailsProps) {
                                 className="object-contain"
                             />
                             {formatNumber(itemDetails.value)}
+                            <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-4 w-4 p-0 ml-1 opacity-60 hover:opacity-100 hover:bg-transparent"
+                                onClick={() => fetchItemDetails(true)}
+                                disabled={refreshing}
+                            >
+                                <RefreshCw className={`h-3 w-3 text-zinc-400 hover:text-zinc-100 ${refreshing ? 'animate-spin' : ''}`} />
+                            </Button>
                         </div>
                         
                         {/* Show RAP as secondary if different from value */}

@@ -13,6 +13,7 @@ import {
 import { Settings, User, Bug } from "lucide-react";
 import Image from "next/image";
 import { RobloxAuthStatus } from "./auth/roblox-auth-status";
+import { Logo } from "./logo";
 
 export function Header() {
   return (
@@ -21,7 +22,7 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-zinc-100">RoTools</span>
+            <span className="text-xl font-bold text-zinc-100"><Logo className="h-8 w-8" /></span>
           </Link>
 
           <div className="flex items-center gap-4">
