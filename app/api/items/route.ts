@@ -42,19 +42,6 @@ export async function GET() {
     const itemsData = await response.json();
     console.log(`[Items API] Successfully fetched ${Object.keys(itemsData.items || {}).length} items`);
     
-    // Log a few sample items for debugging
-    const sampleItemIds = ["18262"]; // Catching Snowflakes
-    for (const id of sampleItemIds) {
-      if (itemsData.items[id]) {
-        console.log(`[Items API] Sample item ${id}:`, {
-          name: itemsData.items[id][0],
-          rap: itemsData.items[id][2],
-          value: itemsData.items[id][3],
-          timestamp: now
-        });
-      }
-    }
-    
     // Cache the data
     itemsCache = itemsData;
     lastFetchTime = now;

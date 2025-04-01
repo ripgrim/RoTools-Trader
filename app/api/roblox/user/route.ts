@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAuthenticatedUser, createErrorResponse } from '@/app/lib/roblox-api';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
@@ -9,34 +10,22 @@ export async function GET(request: Request) {
     const cookie = request.headers.get('x-roblox-cookie');
     
     if (!cookie) {
-      return NextResponse.json({ error: 'Roblox cookie is required' }, { status: 401 });
+      return createErrorResponse('Roblox cookie is required', 401);
     }
     
     console.log("Fetching authenticated user data");
     
-    // Make request to Roblox API
-    const response = await fetch(
-      'https://users.roblox.com/v1/users/authenticated',
-      {
-        method: 'GET',
-        headers: {
-          'Cookie': `.ROBLOSECURITY=${cookie}`,
-          'Accept': 'application/json',
-        },
-      }
-    );
+    // Use shared function to authenticate user
+    const result = await getAuthenticatedUser(cookie);
     
-    if (!response.ok) {
-      console.error("Failed to fetch user data:", response.status, response.statusText);
-      return NextResponse.json({ 
-        error: `Failed to fetch user data: ${response.status} ${response.statusText}` 
-      }, { status: response.status });
+    if (!result.success) {
+      console.error("Failed to fetch user data:", result.error);
+      return createErrorResponse(result.error, result.status);
     }
     
-    const data = await response.json();
-    console.log("Successfully fetched user data", { userId: data.id });
+    console.log("Successfully fetched user data", { userId: result.user.id });
     
-    return NextResponse.json(data);
+    return NextResponse.json(result.user);
   } catch (error) {
     console.error("Error fetching user data:", error);
     return NextResponse.json({ 

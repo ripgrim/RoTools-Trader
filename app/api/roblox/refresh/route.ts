@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/app/lib/roblox-api';
 
 // Set this to false to use real Roblox API calls
 const MOCK_MODE = false;
@@ -138,20 +139,14 @@ async function redeemAuthTicket(authTicket: string): Promise<{
 async function validateCookie(roblosecurityCookie: string): Promise<boolean> {
   try {
     console.log("Validating cookie directly");
-    const response = await fetch("https://users.roblox.com/v1/users/authenticated", {
-      method: 'GET',
-      headers: {
-        'Cookie': `.ROBLOSECURITY=${roblosecurityCookie}`
-      }
-    });
+    const result = await getAuthenticatedUser(roblosecurityCookie);
     
-    const isValid = response.ok;
+    const isValid = result.success;
     console.log("Cookie validation result:", isValid);
     
     if (isValid) {
-      // Try to get user info
-      const userData = await response.json();
-      console.log("User data:", userData);
+      // Log user info
+      console.log("User data:", result.user);
     }
     
     return isValid;

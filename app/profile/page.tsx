@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { TrendingUp, TrendingDown, Star, Shield, Loader2 } from "lucide-react";
@@ -86,13 +86,71 @@ export default function ProfilePage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated, cookie } = useRobloxAuthContext();
+  const { isAuthenticated, cookie, refreshCookie, logout } = useRobloxAuthContext();
   
   // Use the avatar thumbnail hook for the profile image
   const { avatar, isLoading: isAvatarLoading } = useAvatarThumbnail(
     user?.id, 
     null // We'll let the hook fetch the avatar
   );
+
+  // Try to refresh the cookie when authentication fails
+  const handleAuthFailure = useCallback(async () => {
+    if (!cookie) return false;
+    
+    try {
+      console.log("Attempting to refresh Roblox cookie...");
+      const freshCookie = await refreshCookie(cookie);
+      
+      if (freshCookie) {
+        console.log("Cookie refreshed successfully");
+        return true;
+      } else {
+        console.log("Cookie refresh failed, logging out");
+        await logout();
+        setError("Your session has expired. Please log in again.");
+        return false;
+      }
+    } catch (err) {
+      console.error("Error refreshing cookie:", err);
+      await logout();
+      setError("Authentication error. Please log in again.");
+      return false;
+    }
+  }, [cookie, refreshCookie, logout]);
+
+  // Direct client-side fetch from Roblox API (bypass our server)
+  const fetchDirectFromRoblox = useCallback(async (endpoint: string, cookieValue: string) => {
+    console.log(`Direct fetch from Roblox: ${endpoint}`);
+    
+    // Sanitize cookie
+    const sanitizedCookie = cookieValue.includes('.ROBLOSECURITY=') 
+      ? cookieValue.split('.ROBLOSECURITY=')[1].split(';')[0] 
+      : cookieValue;
+    
+    try {
+      const response = await fetch(`https://${endpoint}`, {
+        method: 'GET',
+        headers: {
+          'Cookie': `.ROBLOSECURITY=${sanitizedCookie}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+      });
+      
+      console.log(`Direct Roblox API response (${endpoint}):`, response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Roblox API error: ${response.status}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error(`Direct Roblox API error (${endpoint}):`, error);
+      throw error;
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,31 +165,93 @@ export default function ProfilePage() {
         setIsLoading(true);
         setError(null);
 
-        // Fetch profile data
-        const profileResponse = await fetch("/api/profile", {
-          headers: {
-            'x-roblox-cookie': cookie
-          }
-        });
+        console.log("Auth state:", { isAuthenticated, cookieExists: !!cookie, cookieLength: cookie?.length });
         
-        if (!profileResponse.ok) {
-          throw new Error("Failed to fetch profile");
-        }
-        const userData = await profileResponse.json();
-        setUser(userData);
+        // Ensure cookie is properly formatted
+        const sanitizedCookie = cookie.includes('.ROBLOSECURITY=') 
+          ? cookie.split('.ROBLOSECURITY=')[1].split(';')[0] 
+          : cookie;
+        
+        console.log("Sanitized cookie length:", sanitizedCookie.length);
 
-        // Fetch inventory data
-        const inventoryResponse = await fetch("/api/inventory", {
-          headers: {
-            'x-roblox-cookie': cookie
+        // Try direct fetch from Roblox API (client-side)
+        try {
+          console.log("Trying direct client-side fetch to Roblox API");
+          const userData = await fetchDirectFromRoblox('users.roblox.com/v1/users/authenticated', cookie);
+          console.log("User data fetched directly from Roblox:", userData);
+          setUser(userData);
+          
+          // If we have a user ID, try to fetch inventory using our server endpoint
+          // (Our server endpoint can still work with a valid user ID)
+          if (userData?.id) {
+            try {
+              console.log("Fetching inventory from server with valid user ID");
+              const inventoryResponse = await fetch("/api/inventory", {
+                headers: {
+                  'x-roblox-cookie': sanitizedCookie
+                }
+              });
+              
+              if (inventoryResponse.ok) {
+                const inventoryData = await inventoryResponse.json();
+                console.log(`Inventory data fetched: ${inventoryData.length} items`);
+                setInventory(inventoryData);
+              } else {
+                console.error("Inventory fetch failed, will use empty inventory");
+                setInventory([]);
+              }
+            } catch (err) {
+              console.error("Error fetching inventory:", err);
+              setInventory([]);
+            }
           }
-        });
-        
-        if (!inventoryResponse.ok) {
-          throw new Error("Failed to fetch inventory");
+        } catch (directError) {
+          console.error("Direct Roblox API fetch failed:", directError);
+          console.log("Falling back to server endpoints");
+          
+          // Fallback to server endpoints
+          try {
+            // Fetch profile data through our server endpoint
+            const profileResponse = await fetch("/api/profile", {
+              headers: {
+                'x-roblox-cookie': sanitizedCookie
+              }
+            });
+            
+            console.log("Profile response status:", profileResponse.status);
+            
+            // Try refreshing token if we get a 403
+            if (profileResponse.status === 403) {
+              await handleAuthFailure();
+              throw new Error("Unable to authenticate with Roblox");
+            }
+            
+            if (!profileResponse.ok) {
+              const errorData = await profileResponse.json().catch(() => ({}));
+              throw new Error(`Failed to fetch profile: ${profileResponse.status} ${errorData.error || ''}`);
+            }
+            
+            const userData = await profileResponse.json();
+            setUser(userData);
+            
+            // Fetch inventory
+            const inventoryResponse = await fetch("/api/inventory", {
+              headers: {
+                'x-roblox-cookie': sanitizedCookie
+              }
+            });
+            
+            if (!inventoryResponse.ok) {
+              throw new Error("Failed to fetch inventory");
+            }
+            
+            const inventoryData = await inventoryResponse.json();
+            setInventory(inventoryData);
+          } catch (serverError) {
+            console.error("Server endpoint fallback failed:", serverError);
+            throw new Error("Failed to fetch data: Please verify your Roblox cookie is valid");
+          }
         }
-        const inventoryData = await inventoryResponse.json();
-        setInventory(inventoryData);
       } catch (error) {
         console.error("Data fetch error:", error);
         setError(error instanceof Error ? error.message : "Failed to load data");
@@ -141,7 +261,7 @@ export default function ProfilePage() {
     };
 
     fetchData();
-  }, [isAuthenticated, cookie]);
+  }, [isAuthenticated, cookie, handleAuthFailure, fetchDirectFromRoblox]);
 
   if (isLoading) {
     return (

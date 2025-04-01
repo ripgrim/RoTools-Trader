@@ -1,64 +1,57 @@
 import { NextResponse } from "next/server";
+import { getAuthenticatedUser, createErrorResponse } from '@/app/lib/roblox-api';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'edge';
+
+// Helper function to add CORS headers
+function corsHeaders(response: NextResponse) {
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, x-roblox-cookie');
+  return response;
+}
+
+// Handle OPTIONS requests for CORS preflight
+export async function OPTIONS() {
+  return corsHeaders(new NextResponse(null, { status: 204 }));
+}
 
 export async function GET(request: Request) {
   try {
     // Get the cookie from headers
     const cookie = request.headers.get('x-roblox-cookie');
     
+    console.log(`[Profile API] Cookie present: ${!!cookie}`);
+    
     if (!cookie) {
-      return NextResponse.json({ error: 'Roblox cookie is required' }, { status: 401 });
+      console.log(`[Profile API] No cookie found in request headers`);
+      const response = createErrorResponse('Roblox cookie is required', 401);
+      return corsHeaders(response);
     }
     
     console.log(`[Profile API] Fetching authenticated user profile`);
     
-    // First, fetch the authenticated user's info
-    const authUserResponse = await fetch("https://users.roblox.com/v1/users/authenticated", {
-      headers: {
-        'Cookie': `.ROBLOSECURITY=${cookie}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!authUserResponse.ok) {
-      const errorText = await authUserResponse.text();
-      console.error(`[Profile API] Error fetching authenticated user:`, errorText);
-      return NextResponse.json(
-        { error: `Failed to fetch authenticated user: ${authUserResponse.status}` },
-        { status: authUserResponse.status }
-      );
+    // Use shared function to authenticate user
+    const authResult = await getAuthenticatedUser(cookie);
+    
+    console.log(`[Profile API] Auth result: ${authResult.success ? 'Success' : 'Failed'}`);
+    
+    if (!authResult.success) {
+      console.error(`[Profile API] Error fetching authenticated user:`, authResult.error);
+      const response = createErrorResponse(authResult.error, authResult.status);
+      return corsHeaders(response);
     }
 
-    const authUserData = await authUserResponse.json();
-    const userId = authUserData.id;
+    const userData = authResult.user;
+    const userId = userData.id;
     
     console.log(`[Profile API] Authenticated user ID: ${userId}`);
     
-    // Now fetch the full profile using the user ID
-    const profileUrl = `https://users.roblox.com/v1/users/${userId}`;
-    console.log(`[Profile API] Request URL: ${profileUrl}`);
-    
-    const profileResponse = await fetch(profileUrl, {
-      headers: {
-        'Cookie': `.ROBLOSECURITY=${cookie}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    console.log(`[Profile API] Response status: ${profileResponse.status}`);
-
-    if (!profileResponse.ok) {
-      const errorText = await profileResponse.text();
-      console.error(`[Profile API] Error response:`, errorText);
-      throw new Error(`Failed to fetch profile: ${profileResponse.status} ${profileResponse.statusText}`);
-    }
-
-    const userData = await profileResponse.json();
-    console.log(`[Profile API] Raw response data:`, JSON.stringify(userData, null, 2));
-    
-    return NextResponse.json(userData);
+    // Since we already have the user data from the authentication call,
+    // we can directly return it instead of making another API call
+    const response = NextResponse.json(userData);
+    return corsHeaders(response);
   } catch (error: unknown) {
     const errorDetails = error instanceof Error ? {
       name: error.name,
@@ -70,9 +63,10 @@ export async function GET(request: Request) {
     };
     
     console.error("[Profile API] Detailed error:", errorDetails);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: "Failed to fetch profile", details: errorDetails.message },
       { status: 500 }
     );
+    return corsHeaders(response);
   }
 } 

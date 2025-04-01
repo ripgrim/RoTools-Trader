@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getAuthenticatedUser } from '@/app/lib/roblox-api';
 
 export async function POST(request: Request) {
   try {
@@ -18,14 +19,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch('https://users.roblox.com/v1/users/authenticated', {
-      headers: {
-        'Cookie': `.ROBLOSECURITY=${token}`,
-      },
-      cache: 'no-store',
-    });
+    const result = await getAuthenticatedUser(token);
 
-    if (!response.ok) {
+    if (!result.success) {
       return NextResponse.json(
         { error: 'Invalid token' },
         { 
@@ -39,7 +35,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const userData = await response.json();
+    const userData = result.user;
     return NextResponse.json({ 
       isValid: true,
       user: {

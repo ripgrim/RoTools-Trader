@@ -122,48 +122,6 @@ export function useTrades() {
     }
   }, []);
   
-  // Fallback mock trades for testing/development
-  const getMockTrades = useCallback((): Trade[] => {
-    return [
-      {
-        id: 1,
-        user: {
-          id: 123456,
-          name: "MockTrader",
-          displayName: "Mock Trader",
-          avatar: `https://tr.rbxcdn.com/30DAY-AvatarHeadshot-placeholder/150/150/AvatarHeadshot/Webp/noFilter`
-        },
-        status: "Inbound",
-        items: {
-          offering: [
-            {
-              id: 1234,
-              name: "Mock Limited Item",
-              assetType: "Hat",
-              thumbnail: `https://tr.rbxcdn.com/180DAY-placeholder/150/150/Hat/Webp/noFilter`,
-              rap: 10000,
-              value: 10000,
-              serial: "123"
-            }
-          ],
-          requesting: [
-            {
-              id: 5678,
-              name: "Your Limited Item",
-              assetType: "Hat",
-              thumbnail: `https://tr.rbxcdn.com/180DAY-placeholder/150/150/Hat/Webp/noFilter`,
-              rap: 12000,
-              value: 12000,
-              serial: null
-            }
-          ]
-        },
-        created: new Date().toISOString(),
-        expiration: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
-        isActive: true
-      }
-    ];
-  }, []);
 
   // Transform Roblox API data to our application's Trade format
   const transformTradeListData = useCallback((data: RobloxTradeListItem[], tradeType: TradeType): Trade[] => {
@@ -439,30 +397,17 @@ export function useTrades() {
         ...outboundTrades.slice(0, pageSize), 
         ...completedTrades.slice(0, pageSize)
       ];
-      
-      // If no trades found and authenticated, return mock trades for development
-      if (combinedTrades.length === 0 && isAuthenticated) {
-        console.log("No real trades found, using mock trades for development");
-        const mockTrades = getMockTrades();
-        setTrades(mockTrades);
-      } else {
-        setTrades(combinedTrades);
-      }
+    
       
       setError(null);
     } catch (error) {
       console.error("Error fetching all trades:", error);
       setError(error instanceof Error ? error.message : 'Failed to fetch trades');
       
-      // Fallback to mock data for development
-      if (isAuthenticated) {
-        console.log("Error occurred, falling back to mock trades");
-        setTrades(getMockTrades());
-      }
     } finally {
       setIsLoading(false);
     }
-  }, [fetchTrades, isAuthenticated, getMockTrades, pageSize]);
+  }, [fetchTrades, isAuthenticated, pageSize]);
   
   // Function to load more trades of a specific type
   const loadMoreTrades = useCallback((type: TradeType) => {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { getAuthenticatedUser, createErrorResponse } from '@/app/lib/roblox-api';
 
 interface RolimonsItemDetails {
   name: string;
@@ -85,31 +86,20 @@ export async function GET(request: Request) {
     const cookie = request.headers.get('x-roblox-cookie');
     
     if (!cookie) {
-      return NextResponse.json({ error: 'Roblox cookie is required' }, { status: 401 });
+      return createErrorResponse('Roblox cookie is required', 401);
     }
     
     console.log(`[Inventory API] Fetching authenticated user`);
     
-    // First, fetch the authenticated user's info
-    const authUserResponse = await fetch("https://users.roblox.com/v1/users/authenticated", {
-      headers: {
-        'Cookie': `.ROBLOSECURITY=${cookie}`,
-        'Accept': 'application/json',
-      },
-    });
-
-    if (!authUserResponse.ok) {
-      const errorText = await authUserResponse.text();
-      console.error(`[Inventory API] Error fetching authenticated user:`, errorText);
-      return NextResponse.json(
-        { error: `Failed to fetch authenticated user: ${authUserResponse.status}` },
-        { status: authUserResponse.status }
-      );
-    }
-
-    const authUserData = await authUserResponse.json();
-    const userId = authUserData.id;
+    // Use shared function to authenticate user
+    const authResult = await getAuthenticatedUser(cookie);
     
+    if (!authResult.success) {
+      console.error(`[Inventory API] Error fetching authenticated user:`, authResult.error);
+      return createErrorResponse(authResult.error, authResult.status);
+    }
+    
+    const userId = authResult.user.id;
     console.log(`[Inventory API] Authenticated user ID: ${userId}`);
     
     // Now fetch inventory with the user ID
