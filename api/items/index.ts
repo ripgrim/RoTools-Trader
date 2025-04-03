@@ -92,7 +92,7 @@ export async function getRolimonsInventory(userId: string) {
         name: details[0],
         serial: serials[0] !== undefined ? serials[0] : null,
         rap: details[2],
-        value: details[3],
+        value: details[4] || details[3],
         demand: details[5],
         trend: details[6],
         projected: details[7] === 1,
