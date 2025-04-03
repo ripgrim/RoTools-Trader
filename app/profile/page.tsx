@@ -35,6 +35,7 @@ interface InventoryItem {
   rare: boolean;
   limited: number;
   acronym: string;
+  count?: number | null;
   thumbnailUrl?: string;
 }
 
@@ -155,8 +156,15 @@ export default function ProfilePage() {
   }
 
   // Calculate total inventory value and RAP
-  const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
-  const totalRap = inventory.reduce((sum, item) => sum + item.rap, 0);
+  const totalValue = inventory.reduce((sum, item) => {
+    const count = item.count && item.count > 1 ? item.count : 1;
+    return sum + (item.value * count);
+  }, 0);
+  
+  const totalRap = inventory.reduce((sum, item) => {
+    const count = item.count && item.count > 1 ? item.count : 1;
+    return sum + (item.rap * count);
+  }, 0);
 
   // Format numbers with commas
   const formattedValue = totalValue.toLocaleString();
@@ -270,85 +278,106 @@ export default function ProfilePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 + index * 0.1 }}
-              className="bg-zinc-900/50 border border-zinc-800 p-4 hover:bg-zinc-800/50 transition-colors"
+              className="relative"
             >
-              {/* Item Image */}
-              <div className="relative aspect-square mb-4 bg-zinc-900/50 border border-zinc-800">
-                <Image
-                  src={item.thumbnailUrl || `https://tr.rbxcdn.com/${item.assetId}/420/420/Image/Png`}
-                  alt={item.name}
-                  fill
-                  className="object-contain p-8"
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-              </div>
-
-              {/* Item Info */}
-              <div className="space-y-2">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-medium text-zinc-100 text-sm">{item.name}</h3>
-                    <p className="text-xs text-zinc-400">{item.acronym}</p>
-                  </div>
-                  <div className="flex gap-0.5">
-                    {item.rare && (
-                      <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs">
-                        Rare
-                      </Badge>
-                    )}
-                    {item.projected && (
-                      <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 text-xs">
-                        Projected
-                      </Badge>
-                    )}
-                    {item.hyped && (
-                      <Badge variant="secondary" className="bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
-                        Hyped
-                      </Badge>
-                    )}
-                  </div>
+              {/* Main item card */}
+              <div className="bg-zinc-900/50 border border-zinc-800 p-4 hover:bg-zinc-800/50 transition-colors relative z-20">
+                {/* Item Image */}
+                <div className="relative aspect-square mb-4 bg-zinc-900/50 border border-zinc-800">
+                  <Image
+                    src={item.thumbnailUrl || `https://tr.rbxcdn.com/${item.assetId}/420/420/Image/Png`}
+                    alt={item.name}
+                    fill
+                    className="object-contain p-8"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  {item.count && item.count > 1 && (
+                    <div className="absolute top-2 right-2 bg-zinc-800/90 text-white text-xs font-medium px-2 py-1 rounded-sm">
+                      x{item.count}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex items-center justify-between text-xs space-y-2">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-1">
-                      <span className="text-zinc-400">RAP:</span>
-                      <span className="text-white flex items-center gap-1"><RobuxIcon className="w-4 h-4 text-white"/> {item.rap.toLocaleString()}</span>
+                {/* Item Info */}
+                <div className="space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-medium text-zinc-100 text-sm">{item.name}</h3>
+                      <p className="text-xs text-zinc-400">{item.acronym}</p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-zinc-400">Value:</span>
-                      <span className="text-white flex items-center gap-1">
-                        {item.value === -1 ? (
-                          <span className="text-zinc-500 italic">Unassigned</span>
-                        ) : (
-                          <>
-                            <Image src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={10} height={10} className="object-contain"/>
-                            {item.value.toLocaleString()}
-                          </>
-                        )}
-                      </span>
+                    <div className="flex gap-0.5">
+                      {item.rare && (
+                        <Badge variant="secondary" className="bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 text-xs">
+                          Rare
+                        </Badge>
+                      )}
+                      {item.projected && (
+                        <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 text-xs">
+                          Projected
+                        </Badge>
+                      )}
+                      {item.hyped && (
+                        <Badge variant="secondary" className="bg-red-500/20 text-red-400 hover:bg-red-500/30 text-xs">
+                          Hyped
+                        </Badge>
+                      )}
                     </div>
                   </div>
-                  <div className="space-y-0.5 text-right">
-                    <div className="flex items-center gap-1">
-                      <span className="text-zinc-400">Demand:</span>
-                      <span className={`${DEMAND_COLORS[item.demand.toString() as keyof typeof DEMAND_COLORS]}`}>
-                        {item.demand === -1 ? (
-                          <span className="italic">Unassigned</span>
-                        ) : (
-                          DEMAND_LABELS[item.demand.toString() as keyof typeof DEMAND_LABELS]
-                        )}
-                      </span>
+
+                  <div className="flex items-center justify-between text-xs space-y-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1">
+                        <span className="text-zinc-400">
+                          {item.count && item.count > 1 ? "Total RAP:" : "RAP:"}
+                        </span>
+                        <span className="text-white flex items-center gap-1">
+                          <RobuxIcon className="w-4 h-4 text-white"/> 
+                          {item.count && item.count > 1 
+                            ? (item.rap * item.count).toLocaleString()
+                            : item.rap.toLocaleString()
+                          }
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-zinc-400">
+                          {item.count && item.count > 1 ? "Total Value:" : "Value:"}
+                        </span>
+                        <span className="text-white flex items-center gap-1">
+                          {item.value === -1 ? (
+                            <span className="text-zinc-500 italic">Unassigned</span>
+                          ) : (
+                            <>
+                              <Image src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={10} height={10} className="object-contain"/>
+                              {item.count && item.count > 1 
+                                ? (item.value * item.count).toLocaleString()
+                                : item.value.toLocaleString()
+                              }
+                            </>
+                          )}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-zinc-400">Trend:</span>
-                      <span className={`${TREND_COLORS[item.trend.toString() as keyof typeof TREND_COLORS]}`}>
-                        {item.trend === -1 ? (
-                          <span className="italic">Unassigned</span>
-                        ) : (
-                          TREND_LABELS[item.trend.toString() as keyof typeof TREND_LABELS]
-                        )}
-                      </span>
+                    <div className="space-y-0.5 text-right">
+                      <div className="flex items-center gap-1">
+                        <span className="text-zinc-400">Demand:</span>
+                        <span className={`${DEMAND_COLORS[item.demand.toString() as keyof typeof DEMAND_COLORS]}`}>
+                          {item.demand === -1 ? (
+                            <span className="italic">Unassigned</span>
+                          ) : (
+                            DEMAND_LABELS[item.demand.toString() as keyof typeof DEMAND_LABELS]
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-zinc-400">Trend:</span>
+                        <span className={`${TREND_COLORS[item.trend.toString() as keyof typeof TREND_COLORS]}`}>
+                          {item.trend === -1 ? (
+                            <span className="italic">Unassigned</span>
+                          ) : (
+                            TREND_LABELS[item.trend.toString() as keyof typeof TREND_LABELS]
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
