@@ -24,4 +24,31 @@ export interface Trade {
   created: string;
   expiration?: string;
   isActive?: boolean;
+  offers?: TradeOffer[]
 }
+
+
+export type TradeOffer = {
+  user: { id: number; name: string; displayName: string };
+  userAssets: {
+    id: number;
+    serialNumber: number;
+    assetId: number;
+    name: string;
+    recentAveragePrice: number;
+    originalPrice: number;
+    assetStock: number;
+    membershipType: number;
+  }[];
+  robux: number;
+}
+
+export type TradeDetail = {
+offers: TradeOffer[];
+id: number;
+user: { id: number; name: string; displayName: string };
+created: string;
+expiration: string;
+isActive: boolean;
+status: string;
+};

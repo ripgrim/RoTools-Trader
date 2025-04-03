@@ -1,7 +1,6 @@
 "use client";
 
 import { Trades } from '@/components/trades/trades';
-import { mockTrades } from '@/app/mocks/trades';
 import { useToken } from '@/providers/token-provider';
 import { TradesSkeleton } from '@/components/skeletons/trades';
 import { TokenDialog } from '@/components/token-dialog';
@@ -22,7 +21,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background">
       <div className="h-screen">
-        {user ? <Trades trades={mockTrades} /> : <TradesSkeleton />}
+        {user ? <Trades/> : <TradesSkeleton />}
         <TokenDialog open={!user} />
       </div>
     </main>
