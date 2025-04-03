@@ -100,6 +100,7 @@ export async function getRolimonsInventory(userId: string) {
         rare: details[9] === 1,
         limited: serials.length > 0 ? 1 : 0,
         acronym: details[1] || "",
+        count: serials.length > 0 ? serials.length : null,
     }
   })
 
