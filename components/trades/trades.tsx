@@ -5,17 +5,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TradeList } from './trade-list';
 import { Trade } from '@/app/types/trade';
 import { TradeDetail } from './trade-detail';
-import { mockTrades } from '@/app/mocks/trades';
+import { TradesSkeleton } from '../skeletons/trades';
+import { useToken } from '@/providers/token-provider';
+import { listRobloxTrades } from '@/api/trades';
 
-interface TradesProps {
-  trades: Trade[];
-}
-
-export function Trades({ trades }: TradesProps) {
+export function Trades() {
   const [selectedTrade, setSelectedTrade] = useState<Trade | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState('inbound');
+  const {user, token} = useToken()
+  const [trades, setTrades] = useState<Trade[]>([])
 
   // Handle window resize and initial mobile check
   useEffect(() => {
@@ -34,7 +34,7 @@ export function Trades({ trades }: TradesProps) {
 
   // Auto-select first trade on desktop
   useEffect(() => {
-    if (!isMobile && trades.length > 0 && !selectedTrade) {
+    if (!isMobile && trades && trades.length > 0 && !selectedTrade) {
       setSelectedTrade(trades[0]);
       setIsDrawerOpen(false);
     }
@@ -78,6 +78,17 @@ export function Trades({ trades }: TradesProps) {
     setSelectedTrade(null);
     setIsDrawerOpen(false);
   };
+
+  useEffect(() => {
+    setTrades([])
+    if (user && token) {
+      listRobloxTrades(token, activeTab as "outbound").then(setTrades)
+    }
+  }, [activeTab, user, token])
+
+  if (!trades) {
+    return <TradesSkeleton/>
+  }
 
   return (
     <div className="flex h-full">
