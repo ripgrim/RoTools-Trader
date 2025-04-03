@@ -6,6 +6,7 @@ import { verifyAuthTokenExtended } from '@/api/user';
 
 interface TokenContextType {
   isLoading: boolean;
+  token?: string,
   clearToken: () => void;
   user?: {
     avatar: string,
@@ -55,7 +56,7 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <TokenContext.Provider value={{ user, isLoading, clearToken }}>
+    <TokenContext.Provider value={{ user, isLoading, clearToken, token: typeof window !== "undefined" && "localStorage" in window ? (localStorage.getItem("rolimons-token") || undefined) : undefined }}>
       {children}
     </TokenContext.Provider>
   );

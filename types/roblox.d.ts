@@ -16,4 +16,5 @@ type RobloxProfile = {
     id: number,
     name: string,
     displayName: string,
+    avatarUrl: string,
 }

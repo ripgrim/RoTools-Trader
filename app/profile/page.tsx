@@ -7,6 +7,9 @@ import { TrendingUp, TrendingDown, Star, Shield } from "lucide-react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { RobuxIcon } from "@/components/ui/robux-icon";
+import { getProfile } from "@/api/user";
+import { useToken } from "@/providers/token-provider";
+import { getRolimonsInventory } from "@/api/items";
 
 interface RobloxUser {
   id: number;
@@ -16,6 +19,7 @@ interface RobloxUser {
   created: string;
   isBanned: boolean;
   externalAppDisplayName: string | null;
+  avatarUrl: string,
 }
 
 interface InventoryItem {
@@ -84,38 +88,35 @@ export default function ProfilePage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const {token} = useToken()
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        // Fetch profile data
-        const profileResponse = await fetch("/api/profile");
-        if (!profileResponse.ok) {
-          throw new Error("Failed to fetch profile");
+    setUser(null)
+    setError(null)
+    setIsLoading(true)
+    if (token) {
+      const fetchData = async () => {
+        try {
+          setIsLoading(true);
+          setError(null);
+  
+          // Fetch profile data
+          const profileResponse = await getProfile(token)
+          setUser(profileResponse);
+  
+          const inventoryData = await getRolimonsInventory(String(profileResponse.id))
+          setInventory(inventoryData);
+        } catch (error) {
+          console.error("Data fetch error:", error);
+          setError(error instanceof Error ? error.message : "Failed to load data");
+        } finally {
+          setIsLoading(false);
         }
-        const userData = await profileResponse.json();
-        setUser(userData);
-
-        // Fetch inventory data
-        const inventoryResponse = await fetch("/api/inventory");
-        if (!inventoryResponse.ok) {
-          throw new Error("Failed to fetch inventory");
-        }
-        const inventoryData = await inventoryResponse.json();
-        setInventory(inventoryData);
-      } catch (error) {
-        console.error("Data fetch error:", error);
-        setError(error instanceof Error ? error.message : "Failed to load data");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+      };
+  
+      fetchData();
+    }
+  }, [token]);
 
   if (isLoading) {
     return (
@@ -174,7 +175,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-zinc-800 border border-zinc-700">
                 <Image
-                  src={`https://tr.rbxcdn.com/30DAY-AvatarHeadshot-7181BD1227746006A9A38A4464AA8EF0-Png/150/150/AvatarHeadshot/Webp/noFilter`}
+                  src={user.avatarUrl}
                   alt={user.displayName}
                   width={64}
                   height={64}

@@ -25,7 +25,7 @@ export async function verifyAuthToken(token: string) {
 
 export async function verifyAuthTokenExtended(token: string) {
     const auth = await verifyAuthToken(token)
-    const picture = await getBatchThumbnails([{type: "Avatar", id: auth.user.id, format: "png", size: "150x150"}])
+    const picture = await getBatchThumbnails([{type: "Avatar", id: auth.user.id, format: "webp", size: "150x150"}])
     return {...auth, user: {...auth.user, avatarUrl: picture[String(auth.user.id)]!}}
 }
 
@@ -39,5 +39,6 @@ export async function getProfile(token: string, userId?: string) {
     if (!profileResponse.ok) {
         throw new Error(`failed to get profile ${userId} (${profileResponse.status}): ${await profileResponse.text()}`)
     }
-    return (await profileResponse.json()) as RobloxProfile
+    const picture = await getBatchThumbnails([{type: "Avatar", id: userId, format: "webp", size: "150x150"}])
+    return {...(await profileResponse.json()), avatarUrl: picture[userId]} as RobloxProfile
 }
