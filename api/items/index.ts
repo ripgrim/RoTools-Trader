@@ -26,6 +26,7 @@ export async function getRolimonsItemDetails() {
       headers: {
         Accept: "application/json",
       },
+      cache: "no-store",
     }
   );
 
@@ -47,6 +48,7 @@ export async function getRolimonsInventory(userId: string) {
       headers: {
         Accept: "application/json",
       },
+      "cache": "no-store",
     }
   );
 

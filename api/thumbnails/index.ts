@@ -41,6 +41,7 @@ export async function getBatchThumbnails(
         isCircular: false,
       
     }))),
+    cache: "no-store",
   });
   
   if (!response.ok) {
