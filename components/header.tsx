@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Settings, User } from "lucide-react";
 import Image from "next/image";
+import { useToken } from "@/providers/token-provider";
 export function Header() {
+  const {user} = useToken()
   return (
     <header className="border-b border-zinc-800 bg-zinc-900/50">
       <div className="container mx-auto px-4">
@@ -24,11 +26,11 @@ export function Header() {
           </Link>
 
           {/* Profile Menu */}
-          <DropdownMenu>
+          {user && <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
                 <Image
-                  src="https://tr.rbxcdn.com/30DAY-AvatarHeadshot-7181BD1227746006A9A38A4464AA8EF0-Png/150/150/AvatarHeadshot/Webp/noFilter"
+                  src={user?.avatar || ""}
                   alt="Avatar"
                   height={40}
                   width={40}
@@ -52,7 +54,7 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu>}
         </div>
       </div>
     </header>

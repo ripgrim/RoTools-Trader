@@ -1,8 +1,9 @@
+"use server"
 export async function getBatchThumbnails(
   assets: {
     type:
       | "Avatar"
-      | "AvatarHeadshot"
+      | "AvatarHeadShot"
       | "GameIcon"
       | "BadgeIcon"
       | "GameThumbnail"
@@ -29,18 +30,19 @@ export async function getBatchThumbnails(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Accept": "application/json",
     },
-    body: JSON.stringify({
-      requests: assets.map((data) => ({
+    body: JSON.stringify(assets.map((data) => ({
         requestId: String(data.id),
         targetId: typeof data.id === "number" ? data.id : parseInt(data.id),
         type: data.type,
+        size: data.size,
         format: data.format,
         isCircular: false,
-      })),
-    }),
+      
+    }))),
   });
-
+  
   if (!response.ok) {
     throw new Error(
       `failed to get thumbnails (${response.status}): ${await response.text()}`
@@ -48,8 +50,8 @@ export async function getBatchThumbnails(
   }
 
   const data = (await response.json())
-return (data.data as { assetId: string; imageUrl: string }[]).reduce<Record<string, string>>((acc, item) => {
-    acc[item.assetId] = item.imageUrl;
+return (data.data as { targetId: number; imageUrl: string }[]).reduce<Record<string, string>>((acc, item) => {
+    acc[String(item.targetId)] = item.imageUrl;
     return acc;
 }, {});
 }

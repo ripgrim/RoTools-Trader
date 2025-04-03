@@ -2,27 +2,30 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { SIMULATE_NO_TOKEN } from '@/lib/constants';
+import { verifyAuthTokenExtended } from '@/api/user';
 
 interface TokenContextType {
-  hasToken: boolean;
   isLoading: boolean;
   clearToken: () => void;
+  user?: {
+    avatar: string,
+    id: number,
+  },
 }
 
 const TokenContext = createContext<TokenContextType>({
-  hasToken: false,
   isLoading: true,
   clearToken: () => {},
 });
 
 export function TokenProvider({ children }: { children: React.ReactNode }) {
-  const [hasToken, setHasToken] = useState(false);
+  const [user, setUser] = useState<{avatar: string, id: number}>();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkToken = async () => {
       if (SIMULATE_NO_TOKEN) {
-        setHasToken(false);
+        setUser(undefined)
         setIsLoading(false);
         return;
       }
@@ -31,12 +34,15 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
         // In a real app, you would check for the token in cookies/localStorage
         // and validate it with your backend
         const token = localStorage.getItem('rolimons-token');
-        setHasToken(!!token);
+        if (token) {
+          const user = await verifyAuthTokenExtended(token);
+          setUser({avatar: user.user.avatarUrl, id: user.user.id})
+        }
       } catch (error) {
         console.error('Error checking token:', error);
-        setHasToken(false);
+        setUser(undefined)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
     };
 
@@ -45,11 +51,11 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
 
   const clearToken = () => {
     localStorage.removeItem('rolimons-token');
-    setHasToken(false);
+    setUser(undefined)
   };
 
   return (
-    <TokenContext.Provider value={{ hasToken, isLoading, clearToken }}>
+    <TokenContext.Provider value={{ user, isLoading, clearToken }}>
       {children}
     </TokenContext.Provider>
   );

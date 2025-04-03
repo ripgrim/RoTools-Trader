@@ -1,3 +1,4 @@
+"use server"
 import { getBatchThumbnails } from "../thumbnails";
 
 const DEMAND_LABELS = {

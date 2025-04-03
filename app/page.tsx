@@ -7,7 +7,7 @@ import { TradesSkeleton } from '@/components/skeletons/trades';
 import { TokenDialog } from '@/components/token-dialog';
 
 export default function Home() {
-  const { hasToken, isLoading } = useToken();
+  const { user, isLoading } = useToken();
 
   if (isLoading) {
     return (
@@ -22,8 +22,8 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-background">
       <div className="h-screen">
-        {hasToken ? <Trades trades={mockTrades} /> : <TradesSkeleton />}
-        <TokenDialog open={!hasToken} />
+        {user ? <Trades trades={mockTrades} /> : <TradesSkeleton />}
+        <TokenDialog open={!user} />
       </div>
     </main>
   );

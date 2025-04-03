@@ -1,3 +1,6 @@
+"use server"
+import { getBatchThumbnails } from "../thumbnails"
+
 export async function verifyAuthToken(token: string) {
     const response = await fetch('https://users.roblox.com/v1/users/authenticated', {
         headers: {
@@ -20,11 +23,17 @@ export async function verifyAuthToken(token: string) {
     }
 }
 
+export async function verifyAuthTokenExtended(token: string) {
+    const auth = await verifyAuthToken(token)
+    const picture = await getBatchThumbnails([{type: "Avatar", id: auth.user.id, format: "png", size: "150x150"}])
+    return {...auth, user: {...auth.user, avatarUrl: picture[String(auth.user.id)]!}}
+}
+
 export async function getProfile(token: string, userId?: string) {
     if (!userId) {
         // no user id provided, get currently authenticated user
         const userDetails = await verifyAuthToken(token)
-        userId = userDetails.user.id
+        userId = String(userDetails.user.id)
     }
     const profileResponse = await fetch(`https://users.roblox.com/v1/users/${userId!}`);
     if (!profileResponse.ok) {

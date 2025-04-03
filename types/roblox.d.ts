@@ -1,7 +1,7 @@
 type AuthResponse = {
     isValid: boolean,
     user: {
-        id: string,
+        id: number,
         name: string,
         displayName: string
     }
