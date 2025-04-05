@@ -9,7 +9,7 @@ import { Header } from "@/components/header";
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'RoTools Trader',
+  title: 'Luma',
   description: 'A powerful trading tool for Roblox limiteds',
 };
 

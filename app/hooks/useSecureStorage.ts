@@ -3,7 +3,7 @@ import { createHash } from 'crypto';
 
 // Constants for encryption
 const CHUNK_SIZE = 4; // Number of chunks to split the token into
-const SALT = 'rotools-trader-v1'; // Salt for additional security
+const SALT = 'luma-v1'; // Salt for additional security
 
 interface SecureStorageOptions {
   key: string;

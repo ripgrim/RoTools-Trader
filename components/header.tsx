@@ -21,7 +21,7 @@ export function Header() {
         <div className="flex h-16 items-center justify-between px-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-           <Image src="/luma2.png" alt="RoTools" width={64} height={64} />
+           <Image src="/luma2.png" alt="Luma Logo" width={64} height={64} />
           </Link>
 
           {/* Profile Menu */}

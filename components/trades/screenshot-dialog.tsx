@@ -156,8 +156,8 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
             
             <div class="flex items-center justify-between text-sm pt-3 border-t border-zinc-800">
               <div class="flex items-center gap-2">
-                <img src="/icons/rolimons_logo_icon_blue.png" alt="RoTools" width="16" height="16" />
-                <span class="font-medium">RoTools Trader</span>
+                <img src="/icons/rolimons_logo_icon_blue.png" alt="Luma" width="16" height="16" />
+                <span class="font-medium">Luma</span>
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-zinc-400">Value Diff:</span>

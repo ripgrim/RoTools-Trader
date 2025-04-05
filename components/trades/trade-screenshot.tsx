@@ -175,11 +175,11 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
         <div className="flex items-center gap-2">
           <Image
             src="/icons/rolimons_logo_icon_blue.png"
-            alt="RoTools"
+            alt="Luma"
             width={16}
             height={16}
           />
-          <span className="font-medium">RoTools Trader</span>
+          <span className="font-medium">Luma</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-zinc-400">Value Diff:</span>
