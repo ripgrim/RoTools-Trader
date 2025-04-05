@@ -36,8 +36,15 @@ export function TokenProvider({ children }: { children: React.ReactNode }) {
         // and validate it with your backend
         const token = localStorage.getItem('rolimons-token');
         if (token) {
-          const user = await verifyAuthTokenExtended(token);
+          try {
+            const user = await verifyAuthTokenExtended(token);
           setUser({avatar: user.user.avatarUrl, id: user.user.id})
+          } catch (e) {
+            if (String(e).toLowerCase().includes("unauthorized")) {
+              localStorage.removeItem('rolimons-token')
+              setUser(undefined)
+            }
+          }
         }
       } catch (error) {
         console.error('Error checking token:', error);
