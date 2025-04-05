@@ -17,12 +17,11 @@ export function Header() {
   const {user} = useToken()
   return (
     <header className="border-b border-zinc-800 bg-zinc-900/50">
-      <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+      <div className="w-full">
+        <div className="flex h-16 items-center justify-between px-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold text-zinc-100">RoTools</span>
-            <span className="text-sm text-zinc-500">Trader</span>
+           <Image src="/luma2.png" alt="RoTools" width={64} height={64} />
           </Link>
 
           {/* Profile Menu */}
