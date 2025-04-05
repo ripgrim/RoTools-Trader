@@ -20,8 +20,9 @@ export function Header() {
       <div className="w-full">
         <div className="flex h-16 items-center justify-between px-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-           <Image src="/luma2.png" alt="Luma Logo" width={64} height={64} />
+          <Link href="/" className="flex items-center gap-2 flex-row">
+           <Image src="/luma-logo.png" alt="Luma Logo" width={20} height={20} />
+           <Image src="/luma-type.png" alt="Luma Logo" width={60} height={60} />
           </Link>
 
           {/* Profile Menu */}
