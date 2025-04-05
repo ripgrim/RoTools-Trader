@@ -10,6 +10,14 @@ import { RobuxIcon } from "@/components/ui/robux-icon";
 import { getProfile } from "@/api/user";
 import { useToken } from "@/providers/token-provider";
 import { getRolimonsInventory } from "@/api/items";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface RobloxUser {
   id: number;
@@ -89,6 +97,8 @@ export default function ProfilePage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<string>("value");
+  const [sortDirection, setSortDirection] = useState<string>("desc");
   const {token} = useToken()
 
   useEffect(() => {
@@ -169,6 +179,55 @@ export default function ProfilePage() {
   // Format numbers with commas
   const formattedValue = totalValue.toLocaleString();
   const formattedRap = totalRap.toLocaleString();
+
+  const sortedInventory = [...inventory].sort((a, b) => {
+    let compareA: any;
+    let compareB: any;
+
+    switch (sortBy) {
+      case "rap":
+        compareA = a.rap;
+        compareB = b.rap;
+        break;
+      case "demand":
+        compareA = a.demand;
+        compareB = b.demand;
+        break;
+      case "quantity":
+        compareA = a.count ?? 1;
+        compareB = b.count ?? 1;
+        break;
+      case "value":
+      default:
+        compareA = a.value;
+        compareB = b.value;
+        break;
+    }
+    
+    // Handle unassigned values (-1 for value/demand) - place them last when descending, first when ascending
+    if (compareA === -1 && compareB !== -1) return sortDirection === 'desc' ? 1 : -1;
+    if (compareB === -1 && compareA !== -1) return sortDirection === 'desc' ? -1 : 1;
+    if (compareA === -1 && compareB === -1) return 0; // Keep original order if both are unassigned
+
+    // Primary sort comparison
+    const primaryDiff = sortDirection === "desc" ? compareB - compareA : compareA - compareB;
+
+    // If primary sort results in a difference, return it
+    if (primaryDiff !== 0) {
+      return primaryDiff;
+    }
+
+    // Secondary sort: If primary is equal and sorting by quantity, sort by value
+    if (sortBy === "quantity") {
+        // Handle unassigned values for secondary sort
+       const valA = a.value === -1 ? (sortDirection === 'desc' ? -Infinity : Infinity) : a.value;
+       const valB = b.value === -1 ? (sortDirection === 'desc' ? -Infinity : Infinity) : b.value;
+       return sortDirection === "desc" ? valB - valA : valA - valB;
+    }
+    
+    // If primary is equal and not sorting by quantity, maintain original relative order (stable sort not guaranteed by default .sort, but good enough here)
+    return 0; 
+  });
 
   return (
     <main className="min-h-screen bg-background">
@@ -265,6 +324,41 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
+        {/* Filters Section */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.45 }}
+          className="mb-6 flex flex-col sm:flex-row gap-4 items-end"
+        >
+          <div className="grid w-full sm:w-auto sm:max-w-xs items-center gap-1.5">
+            <Label htmlFor="sort-by" className="text-xs text-zinc-400">Sort by</Label>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger id="sort-by" className="bg-zinc-900/50 border-zinc-800 rounded-none focus:ring-zinc-500 w-full sm:w-[180px]">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-none">
+                <SelectItem value="value" className="focus:bg-zinc-800 rounded-none">Value</SelectItem>
+                <SelectItem value="rap" className="focus:bg-zinc-800 rounded-none">RAP</SelectItem>
+                <SelectItem value="demand" className="focus:bg-zinc-800 rounded-none">Demand</SelectItem>
+                <SelectItem value="quantity" className="focus:bg-zinc-800 rounded-none">Quantity</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid w-full sm:w-auto sm:max-w-xs items-center gap-1.5">
+             <Label htmlFor="sort-direction" className="text-xs text-zinc-400">Order</Label>
+            <Select value={sortDirection} onValueChange={setSortDirection}>
+              <SelectTrigger id="sort-direction" className="bg-zinc-900/50 border-zinc-800 rounded-none focus:ring-zinc-500 w-full sm:w-[180px]">
+                <SelectValue placeholder="Order" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-none">
+                <SelectItem value="desc" className="focus:bg-zinc-800 rounded-none">High to Low</SelectItem>
+                <SelectItem value="asc" className="focus:bg-zinc-800 rounded-none">Low to High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </motion.div>
+
         {/* Inventory Grid */}
         <motion.div 
           initial={{ opacity: 0 }}
@@ -272,7 +366,7 @@ export default function ProfilePage() {
           transition={{ delay: 0.5 }}
           className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
         >
-          {inventory.map((item, index) => (
+          {sortedInventory.map((item, index) => (
             <motion.div
               key={item.assetId}
               initial={{ opacity: 0, y: 20 }}
@@ -292,7 +386,7 @@ export default function ProfilePage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   {item.count && item.count > 1 && (
-                    <div className="absolute top-2 right-2 bg-zinc-800/90 text-white text-xs font-medium px-2 py-1 rounded-sm">
+                    <div className="absolute top-2 right-2 bg-zinc-800/90 text-white text-xs font-medium px-2 py-1 rounded-none">
                       x{item.count}
                     </div>
                   )}
