@@ -60,8 +60,8 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           </div>
           <div className="space-y-2">
             {trade.sending.map((item) => (
-              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
-                <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none">
+                <div className="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
                   <Image
                     src={item.thumbnail}
                     alt={item.name}
@@ -120,8 +120,8 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           </div>
           <div className="space-y-2">
             {trade.receiving.map((item) => (
-              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-sm">
-                <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none">
+                <div className="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
                   <Image
                     src={item.thumbnail}
                     alt={item.name}
