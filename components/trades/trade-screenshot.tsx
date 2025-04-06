@@ -62,7 +62,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
             {trade.sending.map((item) => (
               <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none">
                 <div className="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
-                  <Image
+                  <img
                     src={item.thumbnail}
                     alt={item.name}
                     className="object-cover"
@@ -89,7 +89,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
                     )}
                     {item.value && (
                       <div className="flex items-center gap-1 shrink-0">
-                        <Image
+                        <img
                           src="/icons/rolimons_logo_icon_blue.png"
                           alt="Value"
                           width={12}
@@ -122,7 +122,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
             {trade.receiving.map((item) => (
               <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none">
                 <div className="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
-                  <Image
+                  <img
                     src={item.thumbnail}
                     alt={item.name}
                     className="object-cover"
@@ -149,7 +149,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
                     )}
                     {item.value && (
                       <div className="flex items-center gap-1 shrink-0">
-                        <Image
+                        <img
                           src="/icons/rolimons_logo_icon_blue.png"
                           alt="Value"
                           width={12}
@@ -173,7 +173,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
 
       <div className="flex items-center justify-between text-sm pt-3 border-t border-zinc-800">
         <div className="flex items-center gap-2">
-          <Image
+          <img
             src="/icons/rolimons_logo_icon_blue.png"
             alt="Luma"
             width={16}

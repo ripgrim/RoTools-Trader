@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { useParams } from "next/navigation";
 
 interface RobloxUser {
   id: number;
@@ -100,6 +101,7 @@ export default function ProfilePage() {
   const [sortBy, setSortBy] = useState<string>("value");
   const [sortDirection, setSortDirection] = useState<string>("desc");
   const {token} = useToken()
+  const {id} = useParams()
 
   useEffect(() => {
     setUser(null)
@@ -112,7 +114,7 @@ export default function ProfilePage() {
           setError(null);
   
           // Fetch profile data
-          const profileResponse = await getProfile(token)
+          const profileResponse = await getProfile(token, (id as string) === "me" ? undefined : String(id));
           setUser(profileResponse);
   
           const inventoryData = await getRolimonsInventory(String(profileResponse.id))
@@ -127,7 +129,7 @@ export default function ProfilePage() {
   
       fetchData();
     }
-  }, [token]);
+  }, [token, id]);
 
   if (isLoading) {
     return (
@@ -241,7 +243,7 @@ export default function ProfilePage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 bg-zinc-800 border border-zinc-700">
-                <Image
+                <img
                   src={user.avatarUrl}
                   alt={user.displayName}
                   width={64}
@@ -292,7 +294,7 @@ export default function ProfilePage() {
               <div className="flex flex-col">
                 <span className="text-zinc-400 text-sm">Total Value</span>
                 <span className="text-white font-semibold text-2xl flex items-center gap-1">
-                    <Image src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={16} height={16} className="object-contain"/> {formattedValue}</span>
+                    <img src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={16} height={16} className="object-contain"/> {formattedValue}</span>
               </div>
             </motion.div>
 
@@ -378,7 +380,7 @@ export default function ProfilePage() {
               <div className="bg-zinc-900/50 border border-zinc-800 p-4 hover:bg-zinc-800/50 transition-colors relative z-20">
                 {/* Item Image */}
                 <div className="relative aspect-square mb-4 bg-zinc-900/50 border border-zinc-800">
-                  <Image
+                  <img
                     src={item.thumbnailUrl || `https://tr.rbxcdn.com/${item.assetId}/420/420/Image/Png`}
                     alt={item.name}
                     fill
@@ -441,7 +443,7 @@ export default function ProfilePage() {
                             <span className="text-zinc-500 italic">Unassigned</span>
                           ) : (
                             <>
-                              <Image src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={10} height={10} className="object-contain"/>
+                              <img src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={10} height={10} className="object-contain"/>
                               {item.count && item.count > 1 
                                 ? (item.value * item.count).toLocaleString()
                                 : item.value.toLocaleString()

@@ -14,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { ScreenshotDialog } from './screenshot-dialog';
 import { transformTradeForScreenshot } from "@/lib/utils";
+import Link from 'next/link';
 
 interface TradeDetailProps {
   trade: Trade;
@@ -152,15 +153,17 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
       <div className="p-6 border-b border-zinc-800">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img
-              src={trade.user.avatar}
-              alt={trade.user.displayName}
-              className="w-12 h-12 border border-zinc-800"
-            />
-            <div>
+            <Link href={`/profile/${trade.user.id}`}>
+              <img
+                src={trade.user.avatar}
+                alt={trade.user.displayName}
+                className="w-12 h-12 border border-zinc-800"
+              />
+            </Link>
+            <Link href={`/profile/${trade.user.id}`} className="flex flex-col space-y-0">
               <h2 className="text-lg font-semibold text-zinc-100">{trade.user.displayName}</h2>
               <p className="text-sm text-zinc-400">@{trade.user.name}</p>
-            </div>
+            </Link>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -228,7 +231,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
                     <div className="flex items-center gap-2">
                       <span className="text-zinc-400">Value:</span>
                       <div className="flex items-center gap-1">
-                        <Image
+                        <img
                           src="/icons/rolimons_logo_icon_blue.png"
                           alt="Rolimons"
                           width={16}
@@ -285,7 +288,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
                     <div className="flex items-center gap-2">
                       <span className="text-zinc-400">Value:</span>
                       <div className="flex items-center gap-1">
-                        <Image
+                        <img
                           src="/icons/rolimons_logo_icon_blue.png"
                           alt="Rolimons"
                           width={16}
@@ -319,7 +322,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
                 <div className="flex items-center gap-2">
                   <span className="text-zinc-400">Total Value:</span>
                   <div className="flex items-center gap-1">
-                    <Image
+                    <img
                       src="/icons/rolimons_logo_icon_blue.png"
                       alt="Rolimons"
                       width={16}
@@ -344,7 +347,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
                 <div className="flex items-center gap-2">
                   <span className="text-zinc-400">Total Value:</span>
                   <div className="flex items-center gap-1">
-                    <Image
+                    <img
                       src="/icons/rolimons_logo_icon_blue.png"
                       alt="Rolimons"
                       width={16}
@@ -363,7 +366,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
             <div className="flex justify-between items-center">
               <span className="text-zinc-400">Value Difference:</span>
               <div className="flex items-center gap-1">
-                <Image
+                <img
                   src="/icons/rolimons_logo_icon_blue.png"
                   alt="Rolimons"
                   width={16}

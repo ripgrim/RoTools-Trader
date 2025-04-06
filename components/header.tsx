@@ -21,15 +21,15 @@ export function Header() {
         <div className="flex h-16 items-center justify-between px-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-row">
-           <Image src="/luma-logo.png" alt="Luma Logo" width={20} height={20} />
-           <Image src="/luma-type.png" alt="Luma Logo" width={60} height={60} />
+           <img src="/luma-logo.png" alt="Luma Logo" width={20} height={20} />
+           <img src="/luma-type.png" alt="Luma Logo" width={60} height={60} />
           </Link>
 
           {/* Profile Menu */}
           {user && <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                <Image
+                <img
                   src={user?.avatar || ""}
                   alt="Avatar"
                   height={40}
@@ -42,7 +42,7 @@ export function Header() {
               <DropdownMenuLabel className="text-zinc-400">My Account</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-zinc-800" />
               <DropdownMenuItem asChild>
-                <Link href="/profile" className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100">
+                <Link href={`/profile/me`} className="flex items-center gap-2 text-zinc-300 hover:text-zinc-100">
                   <User className="h-4 w-4" />
                   Profile
                 </Link>
