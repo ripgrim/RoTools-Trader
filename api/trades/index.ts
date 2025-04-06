@@ -53,16 +53,23 @@ export async function listRobloxTrades(
   );
 
   const thumbnails = await getBatchThumbnails(
-    trades.flatMap((trade) =>
+    [...trades.flatMap((trade) =>
       trade.offers.flatMap((offer) =>
-        offer.userAssets.map((asset) => ({
+        offer.userAssets.map((asset): Parameters<typeof getBatchThumbnails>[0][0] => ({
           type: "Asset",
-          size: "200x200",
+          size: "150x150",
           format: "webp",
           id: asset.assetId,
         }))
       )
-    )
+    ), ...trades.flatMap((trade) =>
+      trade.offers.flatMap((offer): Parameters<typeof getBatchThumbnails>[0][0] => ({
+          type: "AvatarHeadShot",
+          size: "100x100",
+          format: "webp",
+          id: offer.user.id,
+      }))
+    )]
   );
 
   data.data = data.data
@@ -80,6 +87,7 @@ export async function listRobloxTrades(
       id: trade.user.id,
       name: trade.user.name,
       displayName: trade.user.displayName,
+      avatar: thumbnails && thumbnails[String(trade.user.id)]
     },
     status: trade.status,
     items: {
@@ -87,22 +95,22 @@ export async function listRobloxTrades(
         .offers!.filter((offer: TradeOffer) => {
           return String(offer.user.id) !== String(authUser.user.id);
         })
-        .map((item) => ({
-          id: item.userAssets[0].assetId,
-          name: item.userAssets[0].name,
+        .flatMap((item) => item.userAssets.map(asset => ({
+          id: asset.assetId,
+          name: asset.name,
           assetType: "Asset",
-          thumbnail: thumbnails[String(item.userAssets[0].id)],
-        })),
-        requesting: trade
+          thumbnail: thumbnails[String(asset.assetId)],
+        }))),
+      requesting: trade
         .offers!.filter((offer: TradeOffer) => {
           return String(offer.user.id) === String(authUser.user.id);
         })
-        .map((item) => ({
-          id: item.userAssets[0].assetId,
-          name: item.userAssets[0].name,
+        .flatMap((item) => item.userAssets.map(asset => ({
+          id: asset.assetId,
+          name: asset.name,
           assetType: "Asset",
-          thumbnail: thumbnails[String(item.userAssets[0].id)],
-        })),
+          thumbnail: thumbnails[String(asset.assetId)],
+        }))),
     },
     created: trade.created,
   }));

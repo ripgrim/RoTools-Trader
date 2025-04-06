@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { Trade, TradeItem } from '@/app/types/trade';
@@ -9,7 +10,7 @@ import { LimitedIcon } from '@/components/ui/limited-icon';
 import { RobuxIcon } from '@/components/ui/robux-icon';
 import Image from 'next/image';
 import { Drawer } from 'vaul';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 import { ScreenshotDialog } from './screenshot-dialog';
 import { transformTradeForScreenshot } from "@/lib/utils";
@@ -60,6 +61,14 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
     }
   }, [isScreenshotOpen]);
 
+
+
+  const calculateDifference = useCallback((offering: TradeItem[], requesting: TradeItem[], getValue: (item: TradeItem) => number | null) => {
+    const offeringTotal = calculateTotal(offering, getValue);
+    const requestingTotal = calculateTotal(requesting, getValue);
+    return offeringTotal - requestingTotal;
+  }, [])
+
   // Add logging for rendered content
   useEffect(() => {
     console.log('Rendered Trade Detail:', {
@@ -97,7 +106,7 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
         value: calculateDifference(trade.items.offering, trade.items.requesting, getItemValue)
       }
     });
-  }, [trade]);
+  }, [trade, calculateDifference]);
 
   // Helper functions for calculations
   const getItemValue = (item: TradeItem): number | null => {
@@ -116,12 +125,6 @@ export function TradeDetail({ trade, isOpen = true, onClose }: TradeDetailProps)
       return value !== null ? sum + value : sum;
     }, 0);
     return total;
-  };
-
-  const calculateDifference = (offering: TradeItem[], requesting: TradeItem[], getValue: (item: TradeItem) => number | null) => {
-    const offeringTotal = calculateTotal(offering, getValue);
-    const requestingTotal = calculateTotal(requesting, getValue);
-    return offeringTotal - requestingTotal;
   };
 
   const calculatePercentage = (offering: TradeItem[], requesting: TradeItem[], getValue: (item: TradeItem) => number | null) => {
