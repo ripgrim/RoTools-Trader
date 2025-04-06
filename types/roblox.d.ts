@@ -18,3 +18,15 @@ type RobloxProfile = {
     displayName: string,
     avatarUrl: string,
 }
+
+type ResaleData = {
+    assetStock: number;
+    sales: number;
+    numberRemaining: number;
+    recentAveragePrice: number;
+    originalPrice: number;
+    priceDataPoints: {
+        value: number;
+        date: string;
+    }[];
+}

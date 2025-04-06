@@ -3,6 +3,7 @@
 import { Trade, TradeDetail, TradeOffer } from "@/app/types/trade";
 import { verifyAuthToken } from "../user";
 import { getBatchThumbnails } from "../thumbnails";
+import { getResaleData, getRolimonsItemDetails } from "../items";
 
 export async function getDetailedTrade(token: string, tradeId: string) {
   const response = await fetch(
@@ -72,6 +73,16 @@ export async function listRobloxTrades(
     )]
   );
 
+  const uniqueAssetIds = Array.from(new Set(trades.flatMap((trade) =>
+    trade.offers.flatMap((offer) =>
+      offer.userAssets.map((asset) => asset.assetId)
+    )
+  )));
+
+  const resaleData: {id: string, data: ResaleData}[] = await Promise.all(uniqueAssetIds.map(async (id) => {
+    return {id:String(id), data: await getResaleData(id)}
+  }))
+
   data.data = data.data
     .filter((a: any) => {
       return trades.find((b) => a.id === b.id) !== undefined;
@@ -80,6 +91,8 @@ export async function listRobloxTrades(
       const trade = trades.find((b) => a.id === b.id)!;
       return { ...a, offers: trade.offers };
     });
+
+  const itemDetails = await getRolimonsItemDetails()
 
   return data.data.map((trade: Trade) => ({
     id: trade.id,
@@ -100,6 +113,8 @@ export async function listRobloxTrades(
           name: asset.name,
           assetType: "Asset",
           thumbnail: thumbnails[String(asset.assetId)],
+          rap: resaleData.find((a) => a.id === String(asset.assetId))?.data?.recentAveragePrice || -1,
+          value: itemDetails.items[String(asset.assetId)]?.[4] || -1
         }))),
       requesting: trade
         .offers!.filter((offer: TradeOffer) => {
@@ -110,6 +125,8 @@ export async function listRobloxTrades(
           name: asset.name,
           assetType: "Asset",
           thumbnail: thumbnails[String(asset.assetId)],
+          rap: resaleData.find((a) => a.id === String(asset.assetId))?.data?.recentAveragePrice || -1,
+          value: itemDetails.items[String(asset.assetId)]?.[4] || -1
         }))),
     },
     created: trade.created,

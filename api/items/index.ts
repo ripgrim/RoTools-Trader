@@ -38,7 +38,22 @@ export async function getRolimonsItemDetails() {
     );
   }
 
-  return await detailsResponse.json();
+  return (await detailsResponse.json()) as {items: Record<
+    string,
+    [
+      string,
+      string,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number,
+      number
+    ]
+  >};
 }
 
 export async function getRolimonsInventory(userId: string) {
@@ -111,4 +126,16 @@ export async function getRolimonsInventory(userId: string) {
   return items.map((asset) => {
     return {...asset, thumbnailUrl: thumbnails[String(asset.assetId)]}
   })
+}
+
+export async function getResaleData(itemId: number | string) {
+  const res = await fetch(`https://economy.roblox.com/v1/assets/${itemId}/resale-data`)
+  if (!res.ok) {
+    throw new Error(
+      `failed to get resale data for item ${itemId} (${res.status}): ${await res.text()}`
+    );
+  }
+
+  const data = await res.json()
+  return data as ResaleData
 }
