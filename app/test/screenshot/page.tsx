@@ -146,7 +146,7 @@ export default function TestScreenshotPage() {
           </div>
         </div>
         
-        <div className="overflow-auto border border-zinc-800 rounded-none mb-4" style={{ maxHeight: '500px', background: '#09090B' }}>
+        <div className="overflow-auto border border-border rounded-none mb-4" style={{ maxHeight: '500px', background: '#09090B' }}>
           <div 
             ref={rawPreviewRef} 
             className="inline-block p-4"
@@ -161,7 +161,7 @@ export default function TestScreenshotPage() {
         {/* Screenshot target */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Screenshot Target</h2>
-          <div className="bg-zinc-950 p-4 rounded-none mb-4">
+          <div className="bg-background p-4 rounded-none mb-4">
             <div data-screenshot-target="true">
               <TradeScreenshot trade={defaultTrade} />
             </div>
@@ -184,25 +184,25 @@ export default function TestScreenshotPage() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Generated Screenshot</h2>
           {imageUrl ? (
-            <div className="bg-zinc-950 p-4 rounded-none">
+            <div className="bg-background p-4 rounded-none">
               <img 
                 src={imageUrl} 
                 alt="Screenshot" 
-                className="w-full border border-zinc-800 rounded-none"
+                className="w-full border border-border rounded-none"
               />
             </div>
           ) : (
-            <div className="flex items-center justify-center h-64 border border-dashed border-zinc-700 rounded-none p-8 bg-zinc-900/50">
-              <p className="text-zinc-400 text-center">
+            <div className="flex items-center justify-center h-64 border border-dashed border-border rounded-none p-8 bg-background/50">
+              <p className="text-foreground text-center">
                 Screenshot will appear here after you click "Generate Screenshot"
               </p>
             </div>
           )}
           
           <div className="mt-4 flex justify-between items-center">
-            <span className="text-sm text-zinc-400">Scale:</span>
+            <span className="text-sm text-foreground">Scale:</span>
             <select 
-              className="px-2 py-1 border border-zinc-800 rounded-none bg-zinc-950 text-sm"
+              className="px-2 py-1 border border-border rounded-none bg-background text-sm"
               value={scale}
               onChange={(e) => setScale(Number(e.target.value))}
             >
@@ -215,10 +215,10 @@ export default function TestScreenshotPage() {
         </div>
       </div>
       
-      <div className="mt-8 p-4 bg-zinc-900/50 border border-zinc-800 rounded-none">
+      <div className="mt-8 p-4 bg-background/50 border border-border rounded-none">
         <h3 className="font-medium mb-2">How it works:</h3>
-        <p className="text-sm text-zinc-400">
-          This test uses <code className="bg-zinc-800 px-1 py-0.5 rounded">html2canvas</code> directly to capture screenshots. The styling adjustments are applied during capture via the <code className="bg-zinc-800 px-1 py-0.5 rounded">onclone</code> callback to fix layout issues.
+        <p className="text-sm text-foreground">
+          This test uses <code className="bg-background px-1 py-0.5 rounded">html2canvas</code> directly to capture screenshots. The styling adjustments are applied during capture via the <code className="bg-background px-1 py-0.5 rounded">onclone</code> callback to fix layout issues.
         </p>
       </div>
     </div>

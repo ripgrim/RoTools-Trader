@@ -13,10 +13,10 @@ interface TradeCardProps {
 
 export function TradeCard({ trade }: TradeCardProps) {
   const statusColors = {
-    Inbound: 'bg-background text-zinc-100',
-    Outbound: 'bg-background text-zinc-100',
-    Completed: 'bg-background text-zinc-100',
-    Declined: 'bg-background text-zinc-100',
+    Inbound: 'bg-background text-foreground',
+    Outbound: 'bg-background text-foreground',
+    Completed: 'bg-background text-foreground',
+    Declined: 'bg-background text-foreground',
   };
 
   return (
@@ -26,28 +26,28 @@ export function TradeCard({ trade }: TradeCardProps) {
           <img
             src={trade.user.avatar || `https://www.roblox.com/headshot-thumbnail/image?userId=${trade.user.id}&width=50&height=50`}
             alt={trade.user.displayName}
-            className="w-8 h-8 border border-zinc-800"
+            className="w-8 h-8 border border-border"
           />
           <div>
-            <h3 className="font-medium text-zinc-100">{trade.user.displayName}</h3>
-            <p className="text-xs text-zinc-400">@{trade.user.name}</p>
+            <h3 className="font-medium text-foreground">{trade.user.displayName}</h3>
+            <p className="text-xs text-muted-foreground">@{trade.user.name}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge 
             variant="outline" 
-            className={`${statusColors[trade.status as keyof typeof statusColors]} border-zinc-800 px-2 py-0.5 text-xs font-medium`}
+            className={`${statusColors[trade.status as keyof typeof statusColors]} border-border px-2 py-0.5 text-xs font-medium`}
           >
             {trade.status}
           </Badge>
-          <ChevronRight className="w-4 h-4 text-zinc-400" />
+          <ChevronRight className="w-4 h-4 text-muted-foreground" />
         </div>
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-xs text-zinc-400">
+        <span className="text-xs text-muted-foreground">
           {format(parseISO(trade.created), 'MMM d, yyyy')}
         </span>
-        <span className="text-xs text-zinc-400">
+        <span className="text-xs text-muted-foreground">
           {trade.items.offering.length}v{trade.items.requesting.length}
         </span>
       </div>

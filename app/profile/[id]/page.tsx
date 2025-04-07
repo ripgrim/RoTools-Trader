@@ -76,7 +76,7 @@ const TREND_LABELS = {
 } as const;
 
 const DEMAND_COLORS = {
-  "-1": "text-zinc-500 italic",
+  "-1": "text-foreground italic",
   "0": "text-red-400",
   "1": "text-orange-400",
   "2": "text-yellow-400",
@@ -85,7 +85,7 @@ const DEMAND_COLORS = {
 } as const;
 
 const TREND_COLORS = {
-  "-1": "text-zinc-500 italic",
+  "-1": "text-foreground italic",
   "0": "text-red-400",
   "1": "text-orange-400",
   "2": "text-yellow-400",
@@ -238,11 +238,11 @@ export default function ProfilePage() {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900/50 border border-zinc-800 p-4 mb-6"
+          className="bg-background/50 border border-border p-4 mb-6"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-zinc-800 border border-zinc-700">
+              <div className="w-16 h-16 bg-background border border-border">
                 <img
                   src={user.avatarUrl}
                   alt={user.displayName}
@@ -252,12 +252,12 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-zinc-100">{user.displayName}</h1>
-                <p className="text-sm text-zinc-400">@{user.name}</p>
+                <h1 className="text-xl font-semibold text-foreground">{user.displayName}</h1>
+                <p className="text-sm text-foreground">@{user.name}</p>
               </div>
             </div>
             <div className="flex items-center gap-4 text-sm">
-              <div className="text-zinc-500">
+              <div className="text-foreground">
                 Joined {new Date(user.created).toLocaleDateString()}
               </div>
               {user.isBanned && (
@@ -269,8 +269,8 @@ export default function ProfilePage() {
             </div>
           </div>
           {user.description && (
-            <div className="mt-3 pt-3 border-t border-zinc-800">
-              <p className="text-sm text-zinc-400">{user.description}</p>
+            <div className="mt-3 pt-3 border-t border-border">
+              <p className="text-sm text-foreground">{user.description}</p>
             </div>
           )}
         </motion.div>
@@ -280,7 +280,7 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-zinc-900/50 border border-zinc-800 p-6 mb-6"
+          className="bg-background/50 border border-border p-6 mb-6"
         >
           <h2 className="text-xl font-semibold mb-4">Inventory Statistics</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -289,11 +289,11 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="bg-zinc-900/50 border border-zinc-800 p-4"
+              className="bg-background/50 border border-border p-4"
             >
               <div className="flex flex-col">
-                <span className="text-zinc-400 text-sm">Total Value</span>
-                <span className="text-white font-semibold text-2xl flex items-center gap-1">
+                <span className="text-foreground text-sm">Total Value</span>
+                <span className="text-foreground font-semibold text-2xl flex items-center gap-1">
                     <img src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={16} height={16} className="object-contain"/> {formattedValue}</span>
               </div>
             </motion.div>
@@ -303,11 +303,11 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
-              className="bg-zinc-900/50 border border-zinc-800 p-4"
+              className="bg-background/50 border border-border p-4"
             >
               <div className="flex flex-col">
-                <span className="text-zinc-400 text-sm">Total RAP</span>
-                <span className="text-white font-semibold text-2xl flex items-center gap-1"><RobuxIcon className="w-4 h-4 text-white"/> {formattedRap}</span>
+                <span className="text-foreground text-sm">Total RAP</span>
+                <span className="text-foreground font-semibold text-2xl flex items-center gap-1"><RobuxIcon className="w-4 h-4 text-foreground"/> {formattedRap}</span>
               </div>
             </motion.div>
 
@@ -316,11 +316,11 @@ export default function ProfilePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4 }}
-              className="bg-zinc-900/50 border border-zinc-800 p-4"
+              className="bg-background/50 border border-border p-4"
             >
               <div className="flex flex-col">
-                <span className="text-zinc-400 text-sm">Total Items</span>
-                <span className="text-white font-semibold text-2xl">{inventory.length}</span>
+                <span className="text-foreground text-sm">Total Items</span>
+                <span className="text-foreground font-semibold text-2xl">{inventory.length}</span>
               </div>
             </motion.div>
           </div>
@@ -334,28 +334,28 @@ export default function ProfilePage() {
           className="mb-6 flex flex-col sm:flex-row gap-4 items-end"
         >
           <div className="grid w-full sm:w-auto sm:max-w-xs items-center gap-1.5">
-            <Label htmlFor="sort-by" className="text-xs text-zinc-400">Sort by</Label>
+            <Label htmlFor="sort-by" className="text-xs text-foreground">Sort by</Label>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger id="sort-by" className="bg-zinc-900/50 border-zinc-800 rounded-none focus:ring-zinc-500 w-full sm:w-[180px]">
+              <SelectTrigger id="sort-by" className="bg-background/50 border-border rounded-none focus:ring w-full sm:w-[180px]">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-none">
-                <SelectItem value="value" className="focus:bg-zinc-800 rounded-none">Value</SelectItem>
-                <SelectItem value="rap" className="focus:bg-zinc-800 rounded-none">RAP</SelectItem>
-                <SelectItem value="demand" className="focus:bg-zinc-800 rounded-none">Demand</SelectItem>
-                <SelectItem value="quantity" className="focus:bg-zinc-800 rounded-none">Quantity</SelectItem>
+              <SelectContent className="bg-background border-border text-foreground rounded-none">
+                <SelectItem value="value" className="focus:bg-background rounded-none">Value</SelectItem>
+                <SelectItem value="rap" className="focus:bg-background rounded-none">RAP</SelectItem>
+                <SelectItem value="demand" className="focus:bg-background rounded-none">Demand</SelectItem>
+                <SelectItem value="quantity" className="focus:bg-background rounded-none">Quantity</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid w-full sm:w-auto sm:max-w-xs items-center gap-1.5">
-             <Label htmlFor="sort-direction" className="text-xs text-zinc-400">Order</Label>
+             <Label htmlFor="sort-direction" className="text-xs text-foreground">Order</Label>
             <Select value={sortDirection} onValueChange={setSortDirection}>
-              <SelectTrigger id="sort-direction" className="bg-zinc-900/50 border-zinc-800 rounded-none focus:ring-zinc-500 w-full sm:w-[180px]">
+              <SelectTrigger id="sort-direction" className="bg-background/50 border-border rounded-none focus:ring w-full sm:w-[180px]">
                 <SelectValue placeholder="Order" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100 rounded-none">
-                <SelectItem value="desc" className="focus:bg-zinc-800 rounded-none">High to Low</SelectItem>
-                <SelectItem value="asc" className="focus:bg-zinc-800 rounded-none">Low to High</SelectItem>
+              <SelectContent className="bg-background border-border text-foreground rounded-none">
+                <SelectItem value="desc" className="focus:bg-background rounded-none">High to Low</SelectItem>
+                <SelectItem value="asc" className="focus:bg-background rounded-none">Low to High</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -377,9 +377,9 @@ export default function ProfilePage() {
               className="relative"
             >
               {/* Main item card */}
-              <div className="bg-zinc-900/50 border border-zinc-800 p-4 hover:bg-zinc-800/50 transition-colors relative z-20">
+              <div className="bg-background/50 border border-border p-4 hover:bg-background/50 transition-colors relative z-20">
                 {/* Item Image */}
-                <div className="relative aspect-square mb-4 bg-zinc-900/50 border border-zinc-800">
+                <div className="relative aspect-square mb-4 bg-background/50 border border-border">
                   <img
                     src={item.thumbnailUrl || `https://tr.rbxcdn.com/${item.assetId}/420/420/Image/Png`}
                     alt={item.name}
@@ -388,7 +388,7 @@ export default function ProfilePage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   {item.count && item.count > 1 && (
-                    <div className="absolute top-2 right-2 bg-zinc-800/90 text-white text-xs font-medium px-2 py-1 rounded-none">
+                    <div className="absolute top-2 right-2 bg-background/90 text-foreground text-xs font-medium px-2 py-1 rounded-none">
                       x{item.count}
                     </div>
                   )}
@@ -398,8 +398,8 @@ export default function ProfilePage() {
                 <div className="space-y-2">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-medium text-zinc-100 text-sm">{item.name}</h3>
-                      <p className="text-xs text-zinc-400">{item.acronym}</p>
+                      <h3 className="font-medium text-foreground text-sm">{item.name}</h3>
+                      <p className="text-xs text-foreground">{item.acronym}</p>
                     </div>
                     <div className="flex gap-0.5">
                       {item.rare && (
@@ -423,11 +423,11 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between text-xs space-y-2">
                     <div className="space-y-2">
                       <div className="flex items-center gap-1">
-                        <span className="text-zinc-400">
+                        <span className="text-foreground">
                           {item.count && item.count > 1 ? "Total RAP:" : "RAP:"}
                         </span>
-                        <span className="text-white flex items-center gap-1">
-                          <RobuxIcon className="w-4 h-4 text-white"/> 
+                        <span className="text-foreground flex items-center gap-1">
+                          <RobuxIcon className="w-4 h-4 text-foreground"/> 
                           {item.count && item.count > 1 
                             ? (item.rap * item.count).toLocaleString()
                             : item.rap.toLocaleString()
@@ -435,12 +435,12 @@ export default function ProfilePage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-zinc-400">
+                        <span className="text-foreground">
                           {item.count && item.count > 1 ? "Total Value:" : "Value:"}
                         </span>
-                        <span className="text-white flex items-center gap-1">
+                        <span className="text-foreground flex items-center gap-1">
                           {item.value === -1 ? (
-                            <span className="text-zinc-500 italic">Unassigned</span>
+                            <span className="text-foreground italic">Unassigned</span>
                           ) : (
                             <>
                               <img src="/icons/rolimons_logo_icon_blue.png" alt="Rolimons" width={10} height={10} className="object-contain"/>
@@ -455,7 +455,7 @@ export default function ProfilePage() {
                     </div>
                     <div className="space-y-0.5 text-right">
                       <div className="flex items-center gap-1">
-                        <span className="text-zinc-400">Demand:</span>
+                        <span className="text-foreground">Demand:</span>
                         <span className={`${DEMAND_COLORS[item.demand.toString() as keyof typeof DEMAND_COLORS]}`}>
                           {item.demand === -1 ? (
                             <span className="italic">Unassigned</span>
@@ -465,7 +465,7 @@ export default function ProfilePage() {
                         </span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-zinc-400">Trend:</span>
+                        <span className="text-foreground">Trend:</span>
                         <span className={`${TREND_COLORS[item.trend.toString() as keyof typeof TREND_COLORS]}`}>
                           {item.trend === -1 ? (
                             <span className="italic">Unassigned</span>
