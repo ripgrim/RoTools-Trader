@@ -92,9 +92,9 @@ export function Trades() {
 
   return (
     <div className="flex h-full">
-      <div className="w-full md:w-[400px] md:border-r border-zinc-800 h-full overflow-auto">
+      <div className="w-full md:w-[400px] md:border-r border-border h-full overflow-auto">
         <Tabs value={activeTab} onValueChange={handleTabChange} className="h-full flex flex-col">
-          <TabsList className="justify-start px-6 py-6 bg-transparent border-b border-zinc-800">
+          <TabsList className="justify-start px-6 py-6 bg-transparent border-b border-border">
             <TabsTrigger value="inbound" className="data-[state=active]:bg-background">
               Inbound
             </TabsTrigger>

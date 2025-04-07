@@ -26,9 +26,8 @@ export default function RootLayout({
             attribute="class"
             defaultTheme="dark"
             enableSystem
-            disableTransitionOnChange
           >
-            <div className="relative min-h-screen bg-zinc-950">
+            <div className="relative min-h-screen bg-background">
               <Header />
               {children}
               <Toaster />

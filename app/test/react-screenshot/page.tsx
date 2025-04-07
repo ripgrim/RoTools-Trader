@@ -113,7 +113,7 @@ export default function ReactScreenshotTest() {
         {/* Component display (not the actual ref) */}
         <div>
           <h2 className="text-lg font-semibold mb-4">Component Preview</h2>
-          <div className="bg-zinc-950 p-4 mb-4 rounded-none">
+          <div className="bg-background p-4 mb-4 rounded-lg">
             <div className="styled-component-display">
               <style jsx>{`
                 .styled-component-display :global(.item-container) {
@@ -149,16 +149,16 @@ export default function ReactScreenshotTest() {
         <div>
           <h2 className="text-lg font-semibold mb-4">Screenshot Result</h2>
           {image ? (
-            <div className="bg-zinc-950 p-4 rounded-none">
+            <div className="bg-background p-4 rounded-lg">
               <img 
                 src={image} 
                 alt="Screenshot" 
-                className="w-full border border-zinc-800 rounded-none"
+                className="w-full border border-border rounded-lg"
               />
             </div>
           ) : (
-            <div className="flex items-center justify-center h-[300px] border border-dashed border-zinc-700 rounded-none p-8 bg-zinc-900/50">
-              <p className="text-zinc-400 text-center">
+            <div className="flex items-center justify-center h-[300px] border border-dashed border-border rounded-lg p-8 bg-background">
+              <p className="text-foreground text-center">
                 Screenshot will appear here after you click "Take Screenshot"
               </p>
             </div>
@@ -166,10 +166,10 @@ export default function ReactScreenshotTest() {
         </div>
       </div>
       
-      <div className="mt-8 p-4 bg-zinc-900/50 border border-zinc-800 rounded-none">
+      <div className="mt-8 p-4 bg-background border border-border rounded-lg">
         <h3 className="font-medium mb-2">How it works:</h3>
-        <p className="text-sm text-zinc-400">
-          This test uses the <code className="bg-zinc-800 px-1 py-0.5 rounded">use-react-screenshot</code> library, which captures the hidden DOM element using the <code className="bg-zinc-800 px-1 py-0.5 rounded">ref</code> and converts it to an image. The component has a fixed width of 600px to match the TradeScreenshot's designed width.
+        <p className="text-sm text-foreground">
+          This test uses the <code className="bg-background px-1 py-0.5 rounded">use-react-screenshot</code> library, which captures the hidden DOM element using the <code className="bg-background px-1 py-0.5 rounded">ref</code> and converts it to an image. The component has a fixed width of 600px to match the TradeScreenshot's designed width.
         </p>
       </div>
     </div>

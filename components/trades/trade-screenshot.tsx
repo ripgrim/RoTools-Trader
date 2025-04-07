@@ -40,12 +40,12 @@ export interface ScreenshotTrade {
 
 export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
   return (
-    <div className="bg-zinc-950 text-zinc-100 p-5 space-y-4 w-[600px]">
+    <div className="bg-background text-foreground p-5 space-y-4 w-[600px]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-zinc-400 text-sm">Trade #{trade.id}</span>
-          <span className="text-zinc-400 text-sm">•</span>
-          <span className="text-zinc-400 text-sm">{format(new Date(trade.created), 'MMM d, yyyy')}</span>
+          <span className="text-foreground text-sm">Trade #{trade.id}</span>
+          <span className="text-foreground text-sm">•</span>
+          <span className="text-foreground text-sm">{format(new Date(trade.created), 'MMM d, yyyy')}</span>
         </div>
       </div>
 
@@ -60,9 +60,9 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           </div>
           <div className="space-y-2">
             {trade.sending.map((item) => (
-              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none">
-                <div className="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
-                  <img
+              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-border/50 rounded-sm">
+                <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+                  <Image
                     src={item.thumbnail}
                     alt={item.name}
                     className="object-cover"
@@ -72,15 +72,15 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-100 truncate flex-shrink">{item.name}</span>
+                    <span className="text-sm text-foreground truncate flex-shrink">{item.name}</span>
                     {item.serial && (
-                      <div className="serial-container flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                      <div className="serial-container flex items-center gap-0.5 px-1.5 rounded bg-background/80 text-foreground shrink-0">
                         <LimitedIcon className="w-3 h-3" />
                         <span className="text-xs">{item.serial}</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-zinc-300">
+                  <div className="flex items-center gap-3 text-xs text-foreground">
                     {item.rap && (
                       <div className="flex items-center gap-1 shrink-0">
                         <RobuxIcon className="w-3 h-3" />
@@ -105,7 +105,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
             ))}
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Total Value:</span>
+            <span className="text-foreground">Total Value:</span>
             <span>{formatNumber(trade.sendingValue)}</span>
           </div>
         </div>
@@ -120,9 +120,9 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           </div>
           <div className="space-y-2">
             {trade.receiving.map((item) => (
-              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none">
-                <div className="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
-                  <img
+              <div key={item.id} className="item-container flex items-center gap-3 bg-background/90 p-2.5 border border-border/50 rounded-sm">
+                <div className="relative w-10 h-10 bg-background/90 rounded-sm overflow-hidden shrink-0">
+                  <Image
                     src={item.thumbnail}
                     alt={item.name}
                     className="object-cover"
@@ -132,15 +132,15 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-zinc-100 truncate flex-shrink">{item.name}</span>
+                    <span className="text-sm text-foreground truncate flex-shrink">{item.name}</span>
                     {item.serial && (
-                      <div className="serial-container flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                      <div className="serial-container flex items-center gap-0.5 px-1.5 rounded bg-background/80 text-foreground shrink-0">
                         <LimitedIcon className="w-3 h-3" />
                         <span className="text-xs">{item.serial}</span>
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-3 text-xs text-zinc-300">
+                  <div className="flex items-center gap-3 text-xs text-foreground">
                     {item.rap && (
                       <div className="flex items-center gap-1 shrink-0">
                         <RobuxIcon className="w-3 h-3" />
@@ -165,13 +165,13 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
             ))}
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-zinc-400">Total Value:</span>
+            <span className="text-foreground">Total Value:</span>
             <span>{formatNumber(trade.receivingValue)}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-sm pt-3 border-t border-zinc-800">
+      <div className="flex items-center justify-between text-sm pt-3 border-t border-border">
         <div className="flex items-center gap-2">
           <img
             src="/icons/rolimons_logo_icon_blue.png"
@@ -182,7 +182,7 @@ export function TradeScreenshot({ trade }: { trade: ScreenshotTrade }) {
           <span className="font-medium">Luma</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-zinc-400">Value Diff:</span>
+          <span className="text-foreground">Value Diff:</span>
           <span className={cn(
             trade.valueDiff > 0 ? "text-green-400" : "text-red-400",
             "value-diff shrink-0 ml-2"

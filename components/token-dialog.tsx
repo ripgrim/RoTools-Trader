@@ -47,7 +47,7 @@ export function TokenDialog({ open }: TokenDialogProps) {
       toast({
         title: "Success!",
         description: "Your token has been saved successfully.",
-        className: "bg-background text-zinc-100 border border-zinc-800",
+        className: "bg-background text-foreground border border-border",
       });
 
       // Simulate a page reload to refresh the token state
@@ -66,7 +66,7 @@ export function TokenDialog({ open }: TokenDialogProps) {
 
   const buttonContent = isSubmitting ? (
     <div className="flex items-center gap-2">
-      <div className="h-4 w-4 border-2 border-zinc-400 border-t-zinc-100 rounded-full animate-spin" />
+      <div className="h-4 w-4 border-2 border-muted-foreground border-t-foreground rounded-full animate-spin" />
       <span>Saving...</span>
     </div>
   ) : (
@@ -75,13 +75,13 @@ export function TokenDialog({ open }: TokenDialogProps) {
 
   return (
     <Dialog open={open} modal>
-      <DialogContent className="sm:max-w-md border border-zinc-800">
+      <DialogContent className="sm:max-w-md border border-border">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
-            <Shield className="w-5 h-5 text-zinc-400" />
+            <Shield className="w-5 h-5 text-muted-foreground" />
             <DialogTitle className="text-xl font-bold">Token Required</DialogTitle>
           </div>
-          <DialogDescription className="text-zinc-400">
+          <DialogDescription className="text-muted-foreground">
             Please add your Rolimons token to continue using the application.
           </DialogDescription>
         </DialogHeader>
@@ -89,37 +89,37 @@ export function TokenDialog({ open }: TokenDialogProps) {
         <div className="mt-6 space-y-4">
           {/* Instructions */}
           <div className="space-y-4">
-            <h3 className="font-medium text-zinc-100">How to get your token:</h3>
-            <ol className="list-decimal list-inside space-y-3 text-sm text-zinc-400">
-              <li className="pl-2">Visit <span className="text-zinc-100">Roblox.com</span></li>
-              <li className="pl-2">Open Developer Tools (<span className="text-zinc-100">F12</span> or <span className="text-zinc-100">Cmd+Opt+I</span>)</li>
-              <li className="pl-2">Navigate to <span className="text-zinc-100">Application → Local Storage</span></li>
-              <li className="pl-2">Copy the value of the <span className="text-zinc-100">&apos;.ROBLOSECURITY&apos;</span> cookie</li>
+            <h3 className="font-medium text-foreground">How to get your token:</h3>
+            <ol className="list-decimal list-inside space-y-3 text-sm text-muted-foreground">
+              <li className="pl-2">Visit <span className="text-foreground">Roblox.com</span></li>
+              <li className="pl-2">Open Developer Tools (<span className="text-foreground">F12</span> or <span className="text-foreground">Cmd+Opt+I</span>)</li>
+              <li className="pl-2">Navigate to <span className="text-foreground">Application → Local Storage</span></li>
+              <li className="pl-2">Copy the value of the <span className="text-foreground">&apos;.ROBLOSECURITY&apos;</span> cookie</li>
             </ol>
             <div className="flex items-center gap-2">
-              <div className="h-[1px] w-full bg-zinc-800" />
-              <span className="text-zinc-400 text-sm">or</span>
-              <div className="h-[1px] w-full bg-zinc-800" />
+              <div className="h-[1px] w-full bg-border" />
+              <span className="text-muted-foreground text-sm">or</span>
+              <div className="h-[1px] w-full bg-border" />
             </div>
 
-            <ol className="list-decimal list-inside space-y-3 text-sm text-zinc-400">
+            <ol className="list-decimal list-inside space-y-3 text-sm text-muted-foreground">
               <li className="pl-2 flex flex-row gap-2">
-                Install the <a href="https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm" target="_blank" rel="noopener noreferrer" className="text-zinc-100 flex flex-row items-center gap-1">
-                  Cookie Editor <span className="text-zinc-400 text-sm bg-zinc-900 px-1 rounded-none flex flex-row items-center gap-1">4.4 <Star className="w-3 h-3 fill-zinc-400 stroke-zinc-400" /></span>
+                Install the <a href="https://chromewebstore.google.com/detail/cookie-editor/hlkenndednhfkekhgcdicdfddnkalmdm" target="_blank" rel="noopener noreferrer" className="text-foreground flex flex-row items-center gap-1">
+                  Cookie Editor <span className="text-muted-foreground text-sm bg-secondary px-1 rounded-none flex flex-row items-center gap-1">4.4 <Star className="w-3 h-3 fill-muted-foreground stroke-muted-foreground" /></span>
                 </a>
                 extension
               </li>
               <li className="pl-2">Find Roblox in Cookie Editor</li>
-              <li className="pl-2">Copy the value of the <span className="text-zinc-100">&apos;.ROBLOSECURITY&apos;</span> cookie</li>
+              <li className="pl-2">Copy the value of the <span className="text-foreground">&apos;.ROBLOSECURITY&apos;</span> cookie</li>
             </ol>
 
-            <div className="h-[1px] w-full bg-zinc-800" />
+            <div className="h-[1px] w-full bg-border" />
           </div>
 
           <div className="flex flex-col gap-2">
             <Textarea
               placeholder="Enter your .ROBLOSECURITY cookie"
-              className="w-full min-h-[80px] bg-zinc-900/50 border-zinc-800 focus:ring-offset-zinc-950"
+              className="w-full min-h-[80px] bg-secondary/50 border-border focus:ring-offset-background"
               value={token}
               onChange={(e) => setToken(e.target.value)}
             />
@@ -134,12 +134,12 @@ export function TokenDialog({ open }: TokenDialogProps) {
           </div>
 
           {/* Security Notice */}
-          <div className="p-4 bg-zinc-900/50 rounded-none border border-zinc-800/50">
+          <div className="p-4 bg-secondary/50 rounded-none border border-border/50">
             <div className="flex items-start gap-3">
-              <Lock className="w-5 h-5 text-zinc-400 mt-0.5" />
+              <Lock className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
-                <h4 className="font-medium text-zinc-100">No need to fret!</h4>
-                <p className="text-sm text-zinc-400">
+                <h4 className="font-medium text-foreground">No need to fret!</h4>
+                <p className="text-sm text-muted-foreground">
                   Your token is stored locally and never leaves your device. It&apos;s securely hashed
                   and only used to authenticate with Roblox.
                 </p>
@@ -148,13 +148,13 @@ export function TokenDialog({ open }: TokenDialogProps) {
           </div>
 
           {/* OSS Notice
-          <div className="p-4 bg-zinc-900/50 rounded-none border border-zinc-800/50">
+          <div className="p-4 bg-secondary/50 rounded-none border border-border/50">
             <div className="flex items-start gap-3">
-              <Code className="w-5 h-5 text-zinc-400 mt-0.5" />
+              <Code className="w-5 h-5 text-muted-foreground mt-0.5" />
               <div className="space-y-1">
-                <h4 className="font-medium text-zinc-100">Open source</h4>
-                <p className="text-sm text-zinc-400">
-                  This project is open source. You can view the source code <a href="https://github.com/fixroblox/fuck" className="text-zinc-100">here</a>.
+                <h4 className="font-medium text-foreground">Open source</h4>
+                <p className="text-sm text-muted-foreground">
+                  This project is open source. You can view the source code <a href="https://github.com/fixroblox/fuck" className="text-foreground">here</a>.
                 </p>
               </div>
             </div>

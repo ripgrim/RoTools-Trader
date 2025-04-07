@@ -34,18 +34,18 @@ export function TradeList({ trades, selectedTrade, onSelectTrade, type }: TradeL
         animate={{ opacity: 1 }}
         className="text-center py-12"
       >
-        <div className="inline-flex items-center justify-center w-16 h-16 border border-zinc-800 mb-4">
-          <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="inline-flex items-center justify-center w-16 h-16 border border-border mb-4">
+          <svg className="w-8 h-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
         </div>
-        <p className="text-zinc-400 text-lg font-medium">
+        <p className="text-muted-foreground text-lg font-medium">
           {type === 'inbound' && emptyStateMessages.inbound.title}
           {type === 'outbound' && emptyStateMessages.outbound.title}
           {type === 'completed' && emptyStateMessages.completed.title}
           {!type && 'No trades found'}
         </p>
-        <p className="text-zinc-500 text-sm mt-2">
+        <p className="text-muted-foreground text-sm mt-2">
           {type === 'inbound' && emptyStateMessages.inbound.description}
           {type === 'outbound' && emptyStateMessages.outbound.description}
           {type === 'completed' && emptyStateMessages.completed.description}
@@ -70,8 +70,8 @@ export function TradeList({ trades, selectedTrade, onSelectTrade, type }: TradeL
           onClick={() => onSelectTrade(trade)}
           className={`cursor-pointer transition-colors duration-200 ${
             selectedTrade?.id === trade.id 
-              ? 'bg-zinc-900/50 border border-zinc-700' 
-              : 'hover:bg-zinc-900/30'
+              ? 'bg-secondary/50 border border-border' 
+              : 'hover:bg-secondary/30'
           }`}
         >
           <TradeCard trade={trade} />

@@ -92,13 +92,22 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
       await preloadImages();
       setProgress(30);
       
+      // Get computed background color instead of using CSS variables
+      const computedStyle = getComputedStyle(document.documentElement);
+      const backgroundColor = computedStyle.getPropertyValue('--background') || '#1e1e1e';
+      const textColor = computedStyle.getPropertyValue('--foreground') || '#ffffff';
+      const mutedTextColor = computedStyle.getPropertyValue('--muted-foreground') || '#a1a1aa';
+      const borderColor = computedStyle.getPropertyValue('--border') || '#27272a';
+      const secondaryColor = computedStyle.getPropertyValue('--secondary') || '#27272a';
+      
       // Create a container div for the screenshot
       const captureDiv = document.createElement('div');
       captureDiv.style.position = 'fixed';
       captureDiv.style.left = '-9999px';
       captureDiv.style.top = '-9999px';
       captureDiv.style.width = '600px';
-      captureDiv.style.backgroundColor = '#09090B';
+      captureDiv.style.backgroundColor = backgroundColor;
+      captureDiv.style.color = textColor;
       captureDiv.style.padding = '20px';
       captureDiv.style.zIndex = '-1';
       captureDiv.style.visibility = 'hidden';
@@ -110,12 +119,12 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
       const renderTradeScreenshot = () => {
         // Create the container structure
         captureDiv.innerHTML = `
-          <div class="screenshot-container bg-zinc-950 text-zinc-100 p-5 space-y-4 w-[600px]">
+          <div class="screenshot-container p-5 space-y-4 w-[600px]">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <span class="text-zinc-400 text-sm">Trade #${trade.id}</span>
-                <span class="text-zinc-400 text-sm">•</span>
-                <span class="text-zinc-400 text-sm">${new Date(trade.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                <span class="text-sm">Trade #${trade.id}</span>
+                <span class="text-sm">•</span>
+                <span class="text-sm">${new Date(trade.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
               </div>
             </div>
             <div class="grid grid-cols-2 gap-6">
@@ -131,7 +140,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                   <!-- Sending items go here -->
                 </div>
                 <div class="flex items-center justify-between text-sm">
-                  <span class="text-zinc-400">Total Value:</span>
+                  <span>Total Value:</span>
                   <span>${trade.sendingValue.toLocaleString()}</span>
                 </div>
               </div>
@@ -148,19 +157,19 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                   <!-- Receiving items go here -->
                 </div>
                 <div class="flex items-center justify-between text-sm">
-                  <span class="text-zinc-400">Total Value:</span>
+                  <span>Total Value:</span>
                   <span>${trade.receivingValue.toLocaleString()}</span>
                 </div>
               </div>
             </div>
             
-            <div class="flex items-center justify-between text-sm pt-3 border-t border-zinc-800">
+            <div class="flex items-center justify-between text-sm pt-3" style="border-top: 1px solid ${borderColor}">
               <div class="flex items-center gap-2">
                 <img src="/icons/rolimons_logo_icon_blue.png" alt="Luma" width="16" height="16" />
                 <span class="font-medium">Luma</span>
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-zinc-400">Value Diff:</span>
+                <span>Value Diff:</span>
                 <span class="${trade.valueDiff > 0 ? 'text-green-400' : 'text-red-400'} value-diff ml-2 shrink-0">
                   ${trade.valueDiff > 0 ? "+" : ""}${trade.valueDiff.toLocaleString()}
                   <span class="text-sm ml-1.5">
@@ -177,21 +186,24 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
         if (sendingItemsContainer) {
           trade.sending.forEach(item => {
             const itemElement = document.createElement('div');
-            itemElement.className = 'item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none';
+            itemElement.className = 'item-container flex items-center gap-3 p-2.5 rounded-sm';
+            itemElement.style.border = `1px solid ${borderColor}`;
+            itemElement.style.marginBottom = '8px';
+            itemElement.style.backgroundColor = `rgba(30, 30, 30, 0.9)`;
             itemElement.innerHTML = `
-              <div class="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
+              <div class="relative w-10 h-10 rounded-sm overflow-hidden shrink-0">
                 <img src="${item.thumbnail}" alt="${item.name}" class="w-full h-full object-cover" />
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <span class="text-sm text-zinc-100 truncate flex-shrink">${item.name}</span>
+                  <span class="text-sm truncate flex-shrink">${item.name}</span>
                   ${item.serial ? `
-                    <div class="serial-container flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                    <div class="serial-container flex items-center gap-0.5 px-1.5 rounded shrink-0" style="background-color: rgba(39, 39, 42, 0.8)">
                       <span class="text-xs">${item.serial}</span>
                     </div>
                   ` : ''}
                 </div>
-                <div class="flex items-center gap-3 text-xs text-zinc-300">
+                <div class="flex items-center gap-3 text-xs">
                   ${item.rap ? `
                     <div class="flex items-center gap-1 shrink-0">
                       <span>${item.rap.toLocaleString()}</span>
@@ -214,21 +226,24 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
         if (receivingItemsContainer) {
           trade.receiving.forEach(item => {
             const itemElement = document.createElement('div');
-            itemElement.className = 'item-container flex items-center gap-3 bg-background/90 p-2.5 border border-zinc-800/50 rounded-none';
+            itemElement.className = 'item-container flex items-center gap-3 p-2.5 rounded-sm';
+            itemElement.style.border = `1px solid ${borderColor}`;
+            itemElement.style.marginBottom = '8px';
+            itemElement.style.backgroundColor = `rgba(30, 30, 30, 0.9)`;
             itemElement.innerHTML = `
-              <div class="relative w-10 h-10 bg-background/90 rounded-none overflow-hidden shrink-0">
+              <div class="relative w-10 h-10 rounded-sm overflow-hidden shrink-0">
                 <img src="${item.thumbnail}" alt="${item.name}" class="w-full h-full object-cover" />
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <span class="text-sm text-zinc-100 truncate flex-shrink">${item.name}</span>
+                  <span class="text-sm truncate flex-shrink">${item.name}</span>
                   ${item.serial ? `
-                    <div class="serial-container flex items-center gap-0.5 px-1.5 rounded bg-zinc-800/80 text-zinc-300 shrink-0">
+                    <div class="serial-container flex items-center gap-0.5 px-1.5 rounded shrink-0" style="background-color: rgba(39, 39, 42, 0.8)">
                       <span class="text-xs">${item.serial}</span>
                     </div>
                   ` : ''}
                 </div>
-                <div class="flex items-center gap-3 text-xs text-zinc-300">
+                <div class="flex items-center gap-3 text-xs">
                   ${item.rap ? `
                     <div class="flex items-center gap-1 shrink-0">
                       <span>${item.rap.toLocaleString()}</span>
@@ -267,8 +282,8 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
           margin-left: 8px !important;
         }
         .screenshot-container {
-          color: #fff !important;
-          background-color: #09090b !important;
+          color: ${textColor} !important;
+          background-color: ${backgroundColor} !important;
         }
       `;
       document.head.appendChild(styleElement);
@@ -289,7 +304,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
           logging: true,
           useCORS: true,
           allowTaint: true,
-          backgroundColor: '#09090B',
+          backgroundColor: backgroundColor,
         });
         
         setProgress(90);
@@ -383,7 +398,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                   viewBox="0 0 100 100"
                 >
                   <circle
-                    className="stroke-zinc-800"
+                    className="stroke-border"
                     strokeWidth="8"
                     fill="transparent"
                     r="42"
@@ -405,7 +420,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
                   <span className="text-sm font-medium">{progress}%</span>
                 </div>
               </div>
-              <p className="text-sm text-zinc-400">Generating screenshot...</p>
+              <p className="text-sm text-muted-foreground">Generating screenshot...</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-4">
@@ -417,7 +432,7 @@ export function ScreenshotDialog({ trade, open, onOpenChange }: ScreenshotDialog
             </div>
           ) : (
             <>
-              <div className="aspect-[3/2] bg-zinc-950 rounded-none overflow-hidden">
+              <div className="aspect-[3/2] bg-background rounded-lg overflow-hidden">
                 {imageUrl ? (
                   <img
                     src={imageUrl}
