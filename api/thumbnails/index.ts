@@ -26,6 +26,15 @@ export async function getBatchThumbnails(
     id: string | number,
   }[],
 ) {
+  const toAdd: Record<string,string> = {}
+  if (assets.length > 20) {
+    const rest = assets.slice(20,assets.length)
+    const res = await getBatchThumbnails(rest)
+    Object.entries(res).forEach((group) => {
+      toAdd[group[0]] = group[1]
+    })
+    assets = assets.slice(0,19)
+  }
   const response = await fetch(`https://thumbnails.roblox.com/v1/batch`, {
     method: "POST",
     headers: {
@@ -51,8 +60,8 @@ export async function getBatchThumbnails(
   }
 
   const data = (await response.json())
-return (data.data as { targetId: number; imageUrl: string }[]).reduce<Record<string, string>>((acc, item) => {
-    acc[String(item.targetId)] = item.imageUrl;
-    return acc;
-}, {});
+return {...((data.data as { targetId: number; imageUrl: string }[]).reduce<Record<string, string>>((acc, item) => {
+  acc[String(item.targetId)] = item.imageUrl;
+  return acc;
+}, {})), ...toAdd}
 }
