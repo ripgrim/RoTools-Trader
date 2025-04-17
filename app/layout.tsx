@@ -19,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <TokenProvider>
           <ThemeProvider
@@ -28,7 +28,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="relative min-h-screen bg-zinc-950">
+            <div className="relative min-h-screen bg-background">
               <Header />
               {children}
               <Toaster />
