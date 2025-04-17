@@ -79,10 +79,6 @@ export async function listRobloxTrades(
     )
   )));
 
-  const resaleData: {id: string, data: ResaleData}[] = await Promise.all(uniqueAssetIds.map(async (id) => {
-    return {id:String(id), data: await getResaleData(id)}
-  }))
-
   data.data = data.data
     .filter((a: any) => {
       return trades.find((b) => a.id === b.id) !== undefined;
@@ -113,7 +109,7 @@ export async function listRobloxTrades(
           name: asset.name,
           assetType: "Asset",
           thumbnail: thumbnails[String(asset.assetId)],
-          rap: resaleData.find((a) => a.id === String(asset.assetId))?.data?.recentAveragePrice || -1,
+          rap: itemDetails.items[String(asset.assetId)]?.[2] || -1,
           value: itemDetails.items[String(asset.assetId)]?.[4] || -1
         }))),
       requesting: trade
@@ -125,7 +121,7 @@ export async function listRobloxTrades(
           name: asset.name,
           assetType: "Asset",
           thumbnail: thumbnails[String(asset.assetId)],
-          rap: resaleData.find((a) => a.id === String(asset.assetId))?.data?.recentAveragePrice || -1,
+          rap: itemDetails.items[String(asset.assetId)]?.[2] || -1,
           value: itemDetails.items[String(asset.assetId)]?.[4] || -1
         }))),
     },
